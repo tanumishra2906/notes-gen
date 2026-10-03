@@ -2,8 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Lightbulb, Sun, Moon, User } from 'lucide-react';
+import { Lightbulb, Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
+import { AuthButton } from './AuthButton';
 
 export const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
@@ -38,13 +39,7 @@ export const Header: React.FC = () => {
           </button>
 
           {/* Login / Sign Up CTA (Visual placeholder) */}
-          <button
-            onClick={() => alert('Authentication will be available in a future update!')}
-            className="flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-md shadow-yellow-500/20 hover:shadow-yellow-500/30 transition-all duration-200 active:scale-95 cursor-pointer"
-          >
-            <User className="w-4 h-4 stroke-[2.5]" />
-            <span>Login / Sign Up</span>
-          </button>
+          <AuthButton />
         </div>
       </div>
     </header>
