@@ -1,15 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { validatePdfFile } from '@/utils/validation';
 import { extractTextFromPdf } from '@/lib/pdf';
 import { generateStudyContent } from '@/lib/gemini';
 import { withAuthenticatedApiUser } from '@/lib/supabase/api-auth';
 import { formatErrorMessage } from '@/utils/formatError';
+import type { StudyContent } from '@/types/study';
 
 export async function POST(request: NextRequest) {
-  return withAuthenticatedApiUser(request, () => handleProcessPdf(request));
+  return withAuthenticatedApiUser(request, (user, supabase) =>
+    handleProcessPdf(request, user, supabase)
+  );
 }
 
-async function handleProcessPdf(request: NextRequest) {
+async function handleProcessPdf(
+  request: NextRequest,
+  user: User,
+  supabase: SupabaseClient
+) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
@@ -49,9 +57,9 @@ async function handleProcessPdf(request: NextRequest) {
     }
 
     // 3. Process extracted text with Gemini
+    let studyContent: StudyContent;
     try {
-      const studyContent = await generateStudyContent(extractedText);
-      return NextResponse.json({ success: true, data: studyContent }, { status: 200 });
+      studyContent = await generateStudyContent(extractedText);
     } catch (geminiError: unknown) {
       const errMsg = geminiError instanceof Error ? geminiError.message : '';
       if (errMsg === '429' || errMsg.includes('429')) {
@@ -74,6 +82,39 @@ async function handleProcessPdf(request: NextRequest) {
       }
       return NextResponse.json(
         { success: false, error: formatErrorMessage(geminiError) },
+        { status: 500 }
+      );
+    }
+
+    const title = file.name.replace(/\.pdf$/i, '');
+    try {
+      const { data: document, error: insertError } = await supabase
+        .from('documents')
+        .insert({
+          user_id: user.id,
+          title,
+          source_filename: file.name,
+          study_content: studyContent,
+        })
+        .select('id')
+        .single();
+
+      if (insertError || !document) {
+        console.error('Failed to save processed document:', insertError);
+        return NextResponse.json(
+          { success: false, error: 'Study material was generated but could not be saved. Please try again.' },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json(
+        { success: true, data: studyContent, documentId: document.id },
+        { status: 200 }
+      );
+    } catch (insertError: unknown) {
+      console.error('Failed to save processed document:', insertError);
+      return NextResponse.json(
+        { success: false, error: 'Study material was generated but could not be saved. Please try again.' },
         { status: 500 }
       );
     }

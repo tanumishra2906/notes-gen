@@ -1,10 +1,10 @@
 import { createServerClient } from '@supabase/ssr';
-import type { User } from '@supabase/supabase-js';
+import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function withAuthenticatedApiUser(
   request: NextRequest,
-  handler: (user: User) => Promise<NextResponse>
+  handler: (user: User, supabase: SupabaseClient) => Promise<NextResponse>
 ): Promise<NextResponse> {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -16,10 +16,11 @@ export async function withAuthenticatedApiUser(
   };
 
   let user: User | null = null;
+  let supabaseClient: SupabaseClient | null = null;
   let authError: Error & { status?: number } | null = null;
 
   try {
-    const supabase = createServerClient(
+    supabaseClient = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
       {
@@ -42,7 +43,7 @@ export async function withAuthenticatedApiUser(
       }
     );
 
-    const result = await supabase.auth.getUser();
+    const result = await supabaseClient.auth.getUser();
     user = result.data.user;
     authError = result.error;
   } catch (error: unknown) {
@@ -71,5 +72,14 @@ export async function withAuthenticatedApiUser(
     );
   }
 
-  return applyAuthCookies(await handler(user));
+  if (!supabaseClient) {
+    return applyAuthCookies(
+      NextResponse.json(
+        { success: false, error: 'Unable to verify authentication at this time.' },
+        { status: 503 }
+      )
+    );
+  }
+
+  return applyAuthCookies(await handler(user, supabaseClient));
 }
