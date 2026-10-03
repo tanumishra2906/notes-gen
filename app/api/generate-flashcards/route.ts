@@ -1,12 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateFlashcards } from '@/lib/gemini';
+import { withAuthenticatedApiUser } from '@/lib/supabase/api-auth';
 import { formatErrorMessage } from '@/utils/formatError';
+import type { StudyContent } from '@/types/study';
+
+interface GenerateFlashcardsRequestBody {
+  studyContent?: StudyContent;
+  text?: string;
+}
 
 export async function POST(request: NextRequest) {
+  return withAuthenticatedApiUser(request, () => handleGenerateFlashcards(request));
+}
+
+async function handleGenerateFlashcards(request: NextRequest) {
   try {
-    let body: any = null;
+    let body: GenerateFlashcardsRequestBody;
     try {
-      body = await request.json();
+      const parsedBody: unknown = await request.json();
+      body =
+        parsedBody && typeof parsedBody === 'object'
+          ? (parsedBody as GenerateFlashcardsRequestBody)
+          : {};
     } catch {
       return NextResponse.json(
         { success: false, error: 'Invalid JSON payload in request.' },
@@ -14,9 +29,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { studyContent, text } = body || {};
+    const { studyContent, text } = body;
+    const sourceContent =
+      studyContent || (text && text.trim().length > 0 ? text : undefined);
 
-    if (!studyContent && (!text || typeof text !== 'string' || text.trim().length === 0)) {
+    if (!sourceContent) {
       return NextResponse.json(
         {
           success: false,
@@ -27,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const flashcards = await generateFlashcards(studyContent || text);
+      const flashcards = await generateFlashcards(sourceContent);
       return NextResponse.json(
         {
           success: true,
@@ -37,8 +54,8 @@ export async function POST(request: NextRequest) {
         },
         { status: 200 }
       );
-    } catch (geminiError: any) {
-      const errMsg = geminiError.message || '';
+    } catch (geminiError: unknown) {
+      const errMsg = geminiError instanceof Error ? geminiError.message : '';
       if (errMsg === '429' || errMsg.includes('429')) {
         return NextResponse.json(
           {

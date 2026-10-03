@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validatePdfFile } from '@/utils/validation';
 import { extractTextFromPdf } from '@/lib/pdf';
 import { generateStudyContent } from '@/lib/gemini';
+import { withAuthenticatedApiUser } from '@/lib/supabase/api-auth';
 import { formatErrorMessage } from '@/utils/formatError';
 
 export async function POST(request: NextRequest) {
+  return withAuthenticatedApiUser(request, () => handleProcessPdf(request));
+}
+
+async function handleProcessPdf(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
@@ -26,9 +31,9 @@ export async function POST(request: NextRequest) {
     try {
       const pdfResult = await extractTextFromPdf(buffer);
       extractedText = pdfResult.text;
-    } catch (pdfError: any) {
-      const msg = pdfError.message || '';
-      if (msg.includes("scanned/image-only") || msg.includes("readable text")) {
+    } catch (pdfError: unknown) {
+      const msg = pdfError instanceof Error ? pdfError.message : '';
+      if (msg.includes('scanned/image-only') || msg.includes('readable text')) {
         return NextResponse.json(
           {
             success: false,
@@ -47,8 +52,8 @@ export async function POST(request: NextRequest) {
     try {
       const studyContent = await generateStudyContent(extractedText);
       return NextResponse.json({ success: true, data: studyContent }, { status: 200 });
-    } catch (geminiError: any) {
-      const errMsg = geminiError.message || '';
+    } catch (geminiError: unknown) {
+      const errMsg = geminiError instanceof Error ? geminiError.message : '';
       if (errMsg === '429' || errMsg.includes('429')) {
         return NextResponse.json(
           {

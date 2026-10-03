@@ -14,31 +14,39 @@ export default function LoginPage() {
     setMessage('');
     setLoading(true);
 
-    if (isSignup) {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+    try {
+      if (isSignup) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
 
-      if (error) {
-        setMessage(error.message);
+        if (error) {
+          setMessage(error.message);
+        } else {
+          setMessage('Account created! Check your email to verify your account.');
+        }
       } else {
-        setMessage('Account created! Check your email to verify your account.');
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-      if (error) {
-        setMessage(error.message);
-      } else {
-        window.location.href = '/dashboard';
+        if (error) {
+          setMessage(error.message);
+        } else {
+          window.location.href = '/dashboard';
+        }
       }
+    } catch (error: unknown) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'Authentication failed. Please try again.'
+      );
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (

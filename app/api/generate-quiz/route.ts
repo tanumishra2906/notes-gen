@@ -1,12 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateQuiz } from '@/lib/gemini';
+import { withAuthenticatedApiUser } from '@/lib/supabase/api-auth';
 import { formatErrorMessage } from '@/utils/formatError';
+import type { StudyContent } from '@/types/study';
+
+interface GenerateQuizRequestBody {
+  studyContent?: StudyContent;
+  text?: string;
+}
 
 export async function POST(request: NextRequest) {
+  return withAuthenticatedApiUser(request, () => handleGenerateQuiz(request));
+}
+
+async function handleGenerateQuiz(request: NextRequest) {
   try {
-    let body: any = null;
+    let body: GenerateQuizRequestBody;
     try {
-      body = await request.json();
+      const parsedBody: unknown = await request.json();
+      body =
+        parsedBody && typeof parsedBody === 'object'
+          ? (parsedBody as GenerateQuizRequestBody)
+          : {};
     } catch {
       return NextResponse.json(
         { success: false, error: 'Invalid JSON payload in request.' },
@@ -14,9 +29,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { studyContent, text } = body || {};
+    const { studyContent, text } = body;
+    const sourceContent =
+      studyContent || (text && text.trim().length > 0 ? text : undefined);
 
-    if (!studyContent && (!text || typeof text !== 'string' || text.trim().length === 0)) {
+    if (!sourceContent) {
       return NextResponse.json(
         {
           success: false,
@@ -27,7 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const questions = await generateQuiz(studyContent || text);
+      const questions = await generateQuiz(sourceContent);
       return NextResponse.json(
         {
           success: true,
@@ -37,8 +54,8 @@ export async function POST(request: NextRequest) {
         },
         { status: 200 }
       );
-    } catch (geminiError: any) {
-      const errMsg = geminiError.message || '';
+    } catch (geminiError: unknown) {
+      const errMsg = geminiError instanceof Error ? geminiError.message : '';
       if (errMsg === '429' || errMsg.includes('429')) {
         return NextResponse.json(
           {
