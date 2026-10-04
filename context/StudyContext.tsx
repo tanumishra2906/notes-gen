@@ -30,7 +30,7 @@ interface StudyContextType {
   handleProcessPdf: (file: File) => Promise<void>;
   handleGenerateFlashcards: () => Promise<boolean>;
   handleGenerateQuiz: () => Promise<boolean>;
-  selectDocument: (id: string) => Promise<void>;
+  selectDocument: (id: string) => Promise<boolean>;
   handleReset: () => void;
   setFlashcards: React.Dispatch<React.SetStateAction<Flashcard[] | null>>;
   setQuizQuestions: React.Dispatch<React.SetStateAction<QuizQuestion[] | null>>;
@@ -327,7 +327,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       const response = await fetch(`/api/documents/${encodeURIComponent(id)}`);
       const result = await response.json();
-      if (!isCurrentRequest()) return;
+      if (!isCurrentRequest()) return false;
 
       const document = result?.data;
       if (
@@ -337,7 +337,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         document.id !== id ||
         !document.study_content
       ) {
-        return;
+        return false;
       }
 
       const loadedFlashcards: Flashcard[] = Array.isArray(document.flashcards)
@@ -372,8 +372,10 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       } catch {
         // Ignore storage access errors.
       }
+      return true;
     } catch {
       // Keep the current document active if loading another one fails.
+      return false;
     } finally {
       if (isCurrentRequest()) {
         setSelectingDocumentId(null);

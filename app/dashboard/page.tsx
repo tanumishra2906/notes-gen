@@ -1,11 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, CheckCircle2, FileText, LoaderCircle, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { CalendarDays, CheckCircle2, Download, FileText, LoaderCircle, Sparkles } from 'lucide-react';
 import { useStudy } from '@/context/StudyContext';
+import { downloadStudyNotesPdf } from '@/utils/exportNotesPdf';
+import type { StudyContent } from '@/types/study';
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const [downloadingDocumentIds, setDownloadingDocumentIds] = useState<string[]>([]);
+  const [downloadErrors, setDownloadErrors] = useState<Record<string, string>>({});
+  const [selectionErrors, setSelectionErrors] = useState<Record<string, string>>({});
   const {
     studyData,
     documentId,
@@ -14,6 +21,57 @@ export default function DashboardPage() {
     selectingDocumentId,
     selectDocument,
   } = useStudy();
+
+  const handleOpenDocument = async (id: string) => {
+    setSelectionErrors((current) => {
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+
+    if (await selectDocument(id)) {
+      router.push('/notes');
+    } else {
+      setSelectionErrors((current) => ({
+        ...current,
+        [id]: 'Could not open this document. Please try again.',
+      }));
+    }
+  };
+
+  const handleDownloadDocument = async (
+    event: React.MouseEvent<HTMLButtonElement>,
+    id: string,
+    title: string
+  ) => {
+    event.stopPropagation();
+    setDownloadingDocumentIds((current) =>
+      current.includes(id) ? current : [...current, id]
+    );
+    setDownloadErrors((current) => {
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+
+    try {
+      const response = await fetch(`/api/documents/${encodeURIComponent(id)}`);
+      const result = await response.json();
+      const studyContent = result?.data?.study_content as StudyContent | undefined;
+      if (!response.ok || !result?.success || !studyContent) {
+        throw new Error('Could not download this document. Please try again.');
+      }
+
+      downloadStudyNotesPdf(studyContent, title);
+    } catch {
+      setDownloadErrors((current) => ({
+        ...current,
+        [id]: 'Could not download this document. Please try again.',
+      }));
+    } finally {
+      setDownloadingDocumentIds((current) => current.filter((itemId) => itemId !== id));
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto py-8 space-y-8 animate-in fade-in-50 duration-300">
@@ -84,51 +142,89 @@ export default function DashboardPage() {
               const isActive = document.id === documentId;
               const isLoading = document.id === selectingDocumentId;
 
+              const isDownloading = downloadingDocumentIds.includes(document.id);
+
               return (
-                <button
+                <div
                   key={document.id}
-                  type="button"
-                  onClick={() => void selectDocument(document.id)}
-                  aria-current={isActive ? 'true' : undefined}
-                  className={`w-full flex items-center justify-between gap-4 rounded-2xl border p-4 text-left transition-colors ${
+                  className={`rounded-2xl border p-4 transition-colors ${
                     isActive
                       ? 'border-yellow-400 bg-yellow-400/10 shadow-sm'
                       : 'border-slate-200/80 dark:border-slate-800/80 bg-white/50 dark:bg-slate-950/30 hover:border-yellow-400/60 hover:bg-yellow-400/5'
                   }`}
                 >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                      <FileText className="w-5 h-5" />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-bold text-slate-900 dark:text-white">
-                        {document.title}
+                  <div className="flex items-center justify-between gap-4">
+                    <button
+                      type="button"
+                      onClick={() => void handleOpenDocument(document.id)}
+                      aria-current={isActive ? 'true' : undefined}
+                      className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                        <FileText className="w-5 h-5" />
                       </span>
-                      <span className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        {new Date(document.created_at).toLocaleDateString(undefined, {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-bold text-slate-900 dark:text-white">
+                          {document.title}
+                        </span>
+                        <span className="mt-1 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          {new Date(document.created_at).toLocaleDateString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </span>
                       </span>
-                    </span>
-                  </span>
+                    </button>
 
-                  <span className="shrink-0">
-                    {isLoading ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-yellow-700 dark:text-yellow-300">
-                        <LoaderCircle className="h-4 w-4 animate-spin" />
-                        Loading
-                      </span>
-                    ) : isActive ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-400/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-yellow-700 dark:text-yellow-300">
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                        Active
-                      </span>
-                    ) : null}
-                  </span>
-                </button>
+                    <span className="shrink-0">
+                      {isLoading ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-yellow-700 dark:text-yellow-300">
+                          <LoaderCircle className="h-4 w-4 animate-spin" />
+                          Loading
+                        </span>
+                      ) : isActive ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-400/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-yellow-700 dark:text-yellow-300">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          Active
+                        </span>
+                      ) : null}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={(event) =>
+                        void handleDownloadDocument(event, document.id, document.title)
+                      }
+                      disabled={isDownloading}
+                      aria-label={`Download notes for ${document.title}`}
+                      className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {isDownloading ? (
+                        <>
+                          <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                          Downloading
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-3.5 w-3.5" />
+                          Download
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  {selectionErrors[document.id] && (
+                    <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
+                      {selectionErrors[document.id]}
+                    </p>
+                  )}
+                  {downloadErrors[document.id] && (
+                    <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
+                      {downloadErrors[document.id]}
+                    </p>
+                  )}
+                </div>
               );
             })}
           </div>
