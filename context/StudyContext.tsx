@@ -28,10 +28,12 @@ const StudyContext = createContext<StudyContextType | undefined>(undefined);
 const SESSION_STORAGE_KEY = 'studydesk_current_notes';
 const SESSION_STORAGE_FLASHCARDS_KEY = 'studydesk_current_flashcards';
 const SESSION_STORAGE_QUIZ_KEY = 'studydesk_current_quiz';
+const SESSION_STORAGE_DOCUMENT_ID_KEY = 'studydesk_current_document_id';
 
 export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [status, setStatus] = useState<ProcessingStatus>('idle');
   const [studyData, setStudyData] = useState<StudyContent | null>(null);
+  const [documentId, setDocumentId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [flashcards, setFlashcards] = useState<Flashcard[] | null>(null);
@@ -52,6 +54,11 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setStudyData(parsed);
           setStatus('success');
         }
+      }
+
+      const savedDocumentId = sessionStorage.getItem(SESSION_STORAGE_DOCUMENT_ID_KEY);
+      if (savedDocumentId) {
+        setDocumentId(savedDocumentId);
       }
 
       const savedCards = sessionStorage.getItem(SESSION_STORAGE_FLASHCARDS_KEY);
@@ -78,6 +85,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const handleProcessPdf = async (file: File) => {
     setStatus('extracting');
+    setDocumentId(null);
     setErrorMessage(null);
     setFlashcards(null);
     setFlashcardStatus('idle');
@@ -124,12 +132,20 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         return;
       }
 
+      if (typeof result.documentId !== 'string' || !result.documentId) {
+        setStatus('error');
+        setErrorMessage('The processed document was not saved correctly. Please try uploading it again.');
+        return;
+      }
+
       setStudyData(result.data);
+      setDocumentId(result.documentId);
       setStatus('success');
 
       // Persist to session storage
       try {
         sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(result.data));
+        sessionStorage.setItem(SESSION_STORAGE_DOCUMENT_ID_KEY, result.documentId);
         sessionStorage.removeItem(SESSION_STORAGE_FLASHCARDS_KEY);
         sessionStorage.removeItem(SESSION_STORAGE_QUIZ_KEY);
       } catch {
@@ -150,9 +166,13 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const handleGenerateFlashcards = async (): Promise<boolean> => {
-    if (!studyData) {
+    if (!studyData || !documentId) {
       setFlashcardStatus('error');
-      setFlashcardError('No study notes available. Please upload a PDF first.');
+      setFlashcardError(
+        documentId
+          ? 'No study notes available. Please upload a PDF first.'
+          : 'No saved study document is selected. Please upload a PDF first.'
+      );
       return false;
     }
 
@@ -163,7 +183,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const response = await fetch('/api/generate-flashcards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studyContent: studyData }),
+        body: JSON.stringify({ documentId }),
       });
 
       const contentType = response.headers.get('content-type') || '';
@@ -207,9 +227,13 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const handleGenerateQuiz = async (): Promise<boolean> => {
-    if (!studyData) {
+    if (!studyData || !documentId) {
       setQuizStatus('error');
-      setQuizError('No study notes available. Please upload a PDF first.');
+      setQuizError(
+        documentId
+          ? 'No study notes available. Please upload a PDF first.'
+          : 'No saved study document is selected. Please upload a PDF first.'
+      );
       return false;
     }
 
@@ -220,7 +244,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const response = await fetch('/api/generate-quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ studyContent: studyData }),
+        body: JSON.stringify({ documentId }),
       });
 
       const contentType = response.headers.get('content-type') || '';
@@ -266,6 +290,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const handleReset = () => {
     setStatus('idle');
     setStudyData(null);
+    setDocumentId(null);
     setErrorMessage(null);
     setFlashcards(null);
     setFlashcardStatus('idle');
@@ -275,6 +300,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setQuizError(null);
     try {
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      sessionStorage.removeItem(SESSION_STORAGE_DOCUMENT_ID_KEY);
       sessionStorage.removeItem(SESSION_STORAGE_FLASHCARDS_KEY);
       sessionStorage.removeItem(SESSION_STORAGE_QUIZ_KEY);
     } catch {
