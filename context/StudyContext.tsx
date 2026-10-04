@@ -1,14 +1,25 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { StudyContent, ProcessingStatus } from '@/types/study';
 import { Flashcard, FlashcardStatus } from '@/types/flashcards';
 import { QuizQuestion, QuizStatus } from '@/types/quiz';
 import { supabase } from '@/lib/supabase';
 
+interface SavedDocument {
+  id: string;
+  title: string;
+  source_filename: string | null;
+  created_at: string;
+}
+
 interface StudyContextType {
   status: ProcessingStatus;
   studyData: StudyContent | null;
+  documentId: string | null;
+  savedDocuments: SavedDocument[];
+  documentsLoading: boolean;
+  selectingDocumentId: string | null;
   errorMessage: string | null;
   flashcards: Flashcard[] | null;
   flashcardStatus: FlashcardStatus;
@@ -19,6 +30,7 @@ interface StudyContextType {
   handleProcessPdf: (file: File) => Promise<void>;
   handleGenerateFlashcards: () => Promise<boolean>;
   handleGenerateQuiz: () => Promise<boolean>;
+  selectDocument: (id: string) => Promise<void>;
   handleReset: () => void;
   setFlashcards: React.Dispatch<React.SetStateAction<Flashcard[] | null>>;
   setQuizQuestions: React.Dispatch<React.SetStateAction<QuizQuestion[] | null>>;
@@ -35,6 +47,9 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [status, setStatus] = useState<ProcessingStatus>('idle');
   const [studyData, setStudyData] = useState<StudyContent | null>(null);
   const [documentId, setDocumentId] = useState<string | null>(null);
+  const [savedDocuments, setSavedDocuments] = useState<SavedDocument[]>([]);
+  const [documentsLoading, setDocumentsLoading] = useState(false);
+  const [selectingDocumentId, setSelectingDocumentId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const [flashcards, setFlashcards] = useState<Flashcard[] | null>(null);
@@ -45,11 +60,44 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [quizStatus, setQuizStatus] = useState<QuizStatus>('idle');
   const [quizError, setQuizError] = useState<string | null>(null);
   const authVersionRef = useRef(0);
+  const documentsRequestVersionRef = useRef(0);
+  const selectionRequestVersionRef = useRef(0);
+
+  const refreshSavedDocuments = useCallback(async (authVersion: number) => {
+    const requestVersion = ++documentsRequestVersionRef.current;
+    const isCurrentRequest = () =>
+      authVersion === authVersionRef.current &&
+      requestVersion === documentsRequestVersionRef.current;
+
+    setDocumentsLoading(true);
+    try {
+      const response = await fetch('/api/documents');
+      const result = await response.json();
+      if (!isCurrentRequest()) return null;
+
+      const documents = result?.data?.documents;
+      if (!response.ok || !result?.success || !Array.isArray(documents)) {
+        setSavedDocuments([]);
+        return null;
+      }
+
+      setSavedDocuments(documents);
+      return documents as SavedDocument[];
+    } catch {
+      if (isCurrentRequest()) {
+        setSavedDocuments([]);
+      }
+      return null;
+    } finally {
+      if (isCurrentRequest()) {
+        setDocumentsLoading(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;
     let activeUserId: string | null = null;
-    let loadVersion = 0;
 
     const clearStudyState = () => {
       setStatus('idle');
@@ -62,6 +110,11 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setQuizQuestions(null);
       setQuizStatus('idle');
       setQuizError(null);
+      setSavedDocuments([]);
+      setDocumentsLoading(false);
+      setSelectingDocumentId(null);
+      selectionRequestVersionRef.current += 1;
+      documentsRequestVersionRef.current += 1;
 
       try {
         sessionStorage.removeItem(SESSION_STORAGE_KEY);
@@ -74,26 +127,29 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     const loadMostRecentDocument = async (userId: string, version: number) => {
+      const selectionVersion = ++selectionRequestVersionRef.current;
       const isCurrentRequest = () =>
-        active && activeUserId === userId && loadVersion === version;
+        active &&
+        activeUserId === userId &&
+        authVersionRef.current === version &&
+        selectionRequestVersionRef.current === selectionVersion;
 
       try {
-        const listResponse = await fetch('/api/documents');
-        const listResult = await listResponse.json();
-
+        const documents = await refreshSavedDocuments(version);
         if (!isCurrentRequest()) return;
-        if (!listResponse.ok || !listResult?.success) {
-          clearStudyState();
-          return;
-        }
-
-        const documents = listResult.data?.documents;
         const mostRecent = Array.isArray(documents) ? documents[0] : null;
         if (!mostRecent || typeof mostRecent.id !== 'string') {
-          clearStudyState();
+          setStatus('idle');
+          setStudyData(null);
+          setDocumentId(null);
+          setFlashcards(null);
+          setFlashcardStatus('idle');
+          setQuizQuestions(null);
+          setQuizStatus('idle');
           return;
         }
 
+        setSelectingDocumentId(mostRecent.id);
         const detailResponse = await fetch(
           `/api/documents/${encodeURIComponent(mostRecent.id)}`
         );
@@ -108,7 +164,13 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           typeof document.id !== 'string' ||
           !document.study_content
         ) {
-          clearStudyState();
+          setStatus('idle');
+          setStudyData(null);
+          setDocumentId(null);
+          setFlashcards(null);
+          setFlashcardStatus('idle');
+          setQuizQuestions(null);
+          setQuizStatus('idle');
           return;
         }
 
@@ -130,8 +192,10 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setQuizStatus(loadedQuizQuestions.length > 0 ? 'success' : 'idle');
         setQuizError(null);
       } catch {
+        // Keep the dashboard in its empty state if loading fails.
+      } finally {
         if (isCurrentRequest()) {
-          clearStudyState();
+          setSelectingDocumentId(null);
         }
       }
     };
@@ -143,11 +207,10 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (nextUserId !== activeUserId) {
         activeUserId = nextUserId;
         authVersionRef.current += 1;
-        loadVersion += 1;
         clearStudyState();
 
         if (nextUserId) {
-          void loadMostRecentDocument(nextUserId, loadVersion);
+          void loadMostRecentDocument(nextUserId, authVersionRef.current);
         }
       } else if (!nextUserId) {
         clearStudyState();
@@ -156,13 +219,16 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     return () => {
       active = false;
-      loadVersion += 1;
+      selectionRequestVersionRef.current += 1;
+      documentsRequestVersionRef.current += 1;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [refreshSavedDocuments]);
 
   const handleProcessPdf = async (file: File) => {
     const authVersion = authVersionRef.current;
+    selectionRequestVersionRef.current += 1;
+    setSelectingDocumentId(null);
     setStatus('extracting');
     setDocumentId(null);
     setErrorMessage(null);
@@ -223,6 +289,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setStudyData(result.data);
       setDocumentId(result.documentId);
       setStatus('success');
+      void refreshSavedDocuments(authVersion);
 
       // Persist to session storage
       try {
@@ -244,6 +311,72 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setErrorMessage(
           msg || 'Network error occurred while connecting to the server. Please try again.'
         );
+      }
+    }
+  };
+
+  const selectDocument = async (id: string) => {
+    const authVersion = authVersionRef.current;
+    const selectionVersion = ++selectionRequestVersionRef.current;
+    const isCurrentRequest = () =>
+      authVersion === authVersionRef.current &&
+      selectionVersion === selectionRequestVersionRef.current;
+
+    setSelectingDocumentId(id);
+
+    try {
+      const response = await fetch(`/api/documents/${encodeURIComponent(id)}`);
+      const result = await response.json();
+      if (!isCurrentRequest()) return;
+
+      const document = result?.data;
+      if (
+        !response.ok ||
+        !result?.success ||
+        !document ||
+        document.id !== id ||
+        !document.study_content
+      ) {
+        return;
+      }
+
+      const loadedFlashcards: Flashcard[] = Array.isArray(document.flashcards)
+        ? document.flashcards
+        : [];
+      const loadedQuizQuestions: QuizQuestion[] = Array.isArray(document.quizQuestions)
+        ? document.quizQuestions
+        : [];
+
+      setStudyData(document.study_content);
+      setDocumentId(document.id);
+      setStatus('success');
+      setErrorMessage(null);
+      setFlashcards(loadedFlashcards);
+      setFlashcardStatus(loadedFlashcards.length > 0 ? 'success' : 'idle');
+      setFlashcardError(null);
+      setQuizQuestions(loadedQuizQuestions);
+      setQuizStatus(loadedQuizQuestions.length > 0 ? 'success' : 'idle');
+      setQuizError(null);
+
+      try {
+        sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(document.study_content));
+        sessionStorage.setItem(SESSION_STORAGE_DOCUMENT_ID_KEY, document.id);
+        sessionStorage.setItem(
+          SESSION_STORAGE_FLASHCARDS_KEY,
+          JSON.stringify(loadedFlashcards)
+        );
+        sessionStorage.setItem(
+          SESSION_STORAGE_QUIZ_KEY,
+          JSON.stringify(loadedQuizQuestions)
+        );
+      } catch {
+        // Ignore storage access errors.
+      }
+    } catch {
+      // Keep the current document active if loading another one fails.
+    } finally {
+      if (isCurrentRequest()) {
+        setSelectingDocumentId(null);
       }
     }
   };
@@ -405,6 +538,10 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         status,
         studyData,
         errorMessage,
+        documentId,
+        savedDocuments,
+        documentsLoading,
+        selectingDocumentId,
         flashcards,
         flashcardStatus,
         flashcardError,
@@ -414,6 +551,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         handleProcessPdf,
         handleGenerateFlashcards,
         handleGenerateQuiz,
+        selectDocument,
         handleReset,
         setFlashcards,
         setQuizQuestions,
