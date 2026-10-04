@@ -115,10 +115,10 @@ export function FileUploader({ onProcessPdf, disabled = false }: FileUploaderPro
                 PDF format only
               </span>
               <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                Max file size: 10MB
+                Max file size: 4 MiB
               </span>
               <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                Max ~30,000 characters
+                Max 100 pages
               </span>
             </div>
           </div>

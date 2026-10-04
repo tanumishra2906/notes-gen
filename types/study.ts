@@ -25,11 +25,14 @@ export interface StudyContent {
 export interface ProcessPdfSuccessResponse {
   success: true;
   data: StudyContent;
+  documentId: string;
+  pageCount?: number | null;
 }
 
 export interface ProcessPdfErrorResponse {
   success: false;
   error: string;
+  pageCount?: number | null;
 }
 
 export type ProcessPdfResponse = ProcessPdfSuccessResponse | ProcessPdfErrorResponse;

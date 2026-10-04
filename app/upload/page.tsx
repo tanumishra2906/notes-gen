@@ -10,7 +10,7 @@ import { Upload, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default function UploadPage() {
-  const { status, studyData, errorMessage, handleProcessPdf, handleReset } = useStudy();
+  const { status, studyData, pageCount, errorMessage, handleProcessPdf, handleReset } = useStudy();
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in-50 duration-300">
@@ -59,6 +59,7 @@ export default function UploadPage() {
                 <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 <span className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
                   PDF successfully processed & notes generated!
+                  {pageCount !== null && ` (${pageCount} ${pageCount === 1 ? 'page' : 'pages'})`}
                 </span>
               </div>
               <div className="flex items-center gap-3">

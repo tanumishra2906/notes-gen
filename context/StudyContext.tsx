@@ -16,6 +16,7 @@ interface SavedDocument {
 interface StudyContextType {
   status: ProcessingStatus;
   studyData: StudyContent | null;
+  pageCount: number | null;
   documentId: string | null;
   savedDocuments: SavedDocument[];
   documentsLoading: boolean;
@@ -46,6 +47,7 @@ const SESSION_STORAGE_DOCUMENT_ID_KEY = 'studydesk_current_document_id';
 export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [status, setStatus] = useState<ProcessingStatus>('idle');
   const [studyData, setStudyData] = useState<StudyContent | null>(null);
+  const [pageCount, setPageCount] = useState<number | null>(null);
   const [documentId, setDocumentId] = useState<string | null>(null);
   const [savedDocuments, setSavedDocuments] = useState<SavedDocument[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
@@ -102,6 +104,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const clearStudyState = () => {
       setStatus('idle');
       setStudyData(null);
+      setPageCount(null);
       setDocumentId(null);
       setErrorMessage(null);
       setFlashcards(null);
@@ -141,6 +144,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (!mostRecent || typeof mostRecent.id !== 'string') {
           setStatus('idle');
           setStudyData(null);
+          setPageCount(null);
           setDocumentId(null);
           setFlashcards(null);
           setFlashcardStatus('idle');
@@ -166,6 +170,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         ) {
           setStatus('idle');
           setStudyData(null);
+          setPageCount(null);
           setDocumentId(null);
           setFlashcards(null);
           setFlashcardStatus('idle');
@@ -182,6 +187,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           : [];
 
         setStudyData(document.study_content);
+        setPageCount(null);
         setDocumentId(document.id);
         setStatus('success');
         setErrorMessage(null);
@@ -231,6 +237,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setSelectingDocumentId(null);
     setStatus('extracting');
     setDocumentId(null);
+    setPageCount(null);
     setErrorMessage(null);
     setFlashcards(null);
     setFlashcardStatus('idle');
@@ -274,8 +281,9 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (!response.ok || !result.success) {
         setStatus('error');
+        setPageCount(typeof result.pageCount === 'number' ? result.pageCount : null);
         setErrorMessage(
-          result.error || 'Failed to process document. Please ensure your PDF contains readable text.'
+          result.error || 'Failed to process the PDF. Please check the file and try again.'
         );
         return;
       }
@@ -288,6 +296,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       setStudyData(result.data);
       setDocumentId(result.documentId);
+      setPageCount(typeof result.pageCount === 'number' ? result.pageCount : null);
       setStatus('success');
       void refreshSavedDocuments(authVersion);
 
@@ -348,6 +357,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         : [];
 
       setStudyData(document.study_content);
+      setPageCount(null);
       setDocumentId(document.id);
       setStatus('success');
       setErrorMessage(null);
@@ -516,6 +526,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const handleReset = () => {
     setStatus('idle');
     setStudyData(null);
+    setPageCount(null);
     setDocumentId(null);
     setErrorMessage(null);
     setFlashcards(null);
@@ -539,6 +550,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       value={{
         status,
         studyData,
+        pageCount,
         errorMessage,
         documentId,
         savedDocuments,

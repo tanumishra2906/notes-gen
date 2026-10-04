@@ -23,8 +23,8 @@ export function UploadProgress({ status }: UploadProgressProps) {
   }, [status]);
 
   const steps = [
-    { id: 1, name: 'Extracting text from PDF', icon: FileText },
-    { id: 2, name: 'Analyzing material with Gemini AI', icon: Cpu },
+    { id: 1, name: 'Preparing PDF for Gemini', icon: FileText },
+    { id: 2, name: 'Reading PDF and generating notes with Gemini AI', icon: Cpu },
     { id: 3, name: 'Generating Study Dashboard', icon: CheckCircle2 },
   ];
 
@@ -38,7 +38,7 @@ export function UploadProgress({ status }: UploadProgressProps) {
         Processing Study Material
       </h3>
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">
-        Extracting concepts, definitions, and formulas using Gemini AI...
+        Gemini is reading the PDF, including its text and visual content...
       </p>
 
       {/* Steps List */}

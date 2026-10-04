@@ -3,7 +3,7 @@ import { StudyContent } from '@/types/study';
 import { Flashcard } from '@/types/flashcards';
 import { QuizQuestion } from '@/types/quiz';
 
-export async function generateStudyContent(extractedText: string): Promise<StudyContent> {
+export async function generateStudyContent(pdfData: string): Promise<StudyContent> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY environment variable is missing. Please set it in your .env.local file.');
@@ -73,6 +73,7 @@ export async function generateStudyContent(extractedText: string): Promise<Study
     'gemini-flash-latest',
   ];
 
+  const extractedText = 'The source document is attached as an inline PDF.';
   const prompt = `You are an expert AI Study Assistant.
 Analyze the following text extracted from a study guide or textbook chapter.
 Create a structured study guide based STRICTLY on the text provided below. Do NOT hallucinate or add facts from outside sources.
@@ -103,7 +104,10 @@ Return strictly JSON format matching the schema.`;
         },
       });
 
-      const result = await model.generateContent(prompt);
+      const result = await model.generateContent([
+        { inlineData: { mimeType: 'application/pdf', data: pdfData } },
+        { text: prompt },
+      ]);
       const responseText = result.response.text();
       
       // Clean up potential markdown code block wrappers if any
@@ -122,6 +126,13 @@ Return strictly JSON format matching the schema.`;
     } catch (error: any) {
       lastError = error;
       const errorMsg = error.message || '';
+      if (
+        /too many pages|page limit|maximum.{0,20}pages|pages?.{0,30}(limit|maximum|exceed)|exceed.{0,30}pages/i.test(
+          errorMsg
+        )
+      ) {
+        throw new Error('PDF_PAGE_LIMIT');
+      }
       if (
         errorMsg.includes('404') ||
         errorMsg.includes('not found') ||

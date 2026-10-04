@@ -1,5 +1,5 @@
-export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
-export const MAX_TEXT_CHARACTERS = 30000; // ~30k chars safety cutoff for gemini-1.5-flash MVP
+export const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024; // 4 MiB
+export const MAX_PDF_PAGES = 100;
 
 export interface ValidationResult {
   valid: boolean;
@@ -23,7 +23,7 @@ export function validatePdfFile(file: File | null | undefined): ValidationResult
     const sizeInMB = (file.size / (1024 * 1024)).toFixed(1);
     return {
       valid: false,
-      error: `File size (${sizeInMB}MB) exceeds the maximum limit of 10MB for the free tier.`,
+      error: `File size (${sizeInMB}MB) exceeds the 4 MiB upload limit. Please choose a smaller PDF.`,
     };
   }
 
