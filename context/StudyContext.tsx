@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { StudyContent, ProcessingStatus } from '@/types/study';
 import { Flashcard, FlashcardStatus } from '@/types/flashcards';
 import { QuizQuestion, QuizStatus } from '@/types/quiz';
+import { supabase } from '@/lib/supabase';
 
 interface StudyContextType {
   status: ProcessingStatus;
@@ -43,47 +44,125 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[] | null>(null);
   const [quizStatus, setQuizStatus] = useState<QuizStatus>('idle');
   const [quizError, setQuizError] = useState<string | null>(null);
+  const authVersionRef = useRef(0);
 
-  // Restore studyData, flashcards, and quiz from sessionStorage on initial mount
   useEffect(() => {
-    try {
-      const savedNotes = sessionStorage.getItem(SESSION_STORAGE_KEY);
-      if (savedNotes) {
-        const parsed = JSON.parse(savedNotes);
-        if (parsed && typeof parsed === 'object' && parsed.summary) {
-          setStudyData(parsed);
-          setStatus('success');
+    let active = true;
+    let activeUserId: string | null = null;
+    let loadVersion = 0;
+
+    const clearStudyState = () => {
+      setStatus('idle');
+      setStudyData(null);
+      setDocumentId(null);
+      setErrorMessage(null);
+      setFlashcards(null);
+      setFlashcardStatus('idle');
+      setFlashcardError(null);
+      setQuizQuestions(null);
+      setQuizStatus('idle');
+      setQuizError(null);
+
+      try {
+        sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        sessionStorage.removeItem(SESSION_STORAGE_DOCUMENT_ID_KEY);
+        sessionStorage.removeItem(SESSION_STORAGE_FLASHCARDS_KEY);
+        sessionStorage.removeItem(SESSION_STORAGE_QUIZ_KEY);
+      } catch {
+        // Ignore storage access errors.
+      }
+    };
+
+    const loadMostRecentDocument = async (userId: string, version: number) => {
+      const isCurrentRequest = () =>
+        active && activeUserId === userId && loadVersion === version;
+
+      try {
+        const listResponse = await fetch('/api/documents');
+        const listResult = await listResponse.json();
+
+        if (!isCurrentRequest()) return;
+        if (!listResponse.ok || !listResult?.success) {
+          clearStudyState();
+          return;
+        }
+
+        const documents = listResult.data?.documents;
+        const mostRecent = Array.isArray(documents) ? documents[0] : null;
+        if (!mostRecent || typeof mostRecent.id !== 'string') {
+          clearStudyState();
+          return;
+        }
+
+        const detailResponse = await fetch(
+          `/api/documents/${encodeURIComponent(mostRecent.id)}`
+        );
+        const detailResult = await detailResponse.json();
+
+        if (!isCurrentRequest()) return;
+        const document = detailResult?.data;
+        if (
+          !detailResponse.ok ||
+          !detailResult?.success ||
+          !document ||
+          typeof document.id !== 'string' ||
+          !document.study_content
+        ) {
+          clearStudyState();
+          return;
+        }
+
+        const loadedFlashcards: Flashcard[] = Array.isArray(document.flashcards)
+          ? document.flashcards
+          : [];
+        const loadedQuizQuestions: QuizQuestion[] = Array.isArray(document.quizQuestions)
+          ? document.quizQuestions
+          : [];
+
+        setStudyData(document.study_content);
+        setDocumentId(document.id);
+        setStatus('success');
+        setErrorMessage(null);
+        setFlashcards(loadedFlashcards.length > 0 ? loadedFlashcards : null);
+        setFlashcardStatus(loadedFlashcards.length > 0 ? 'success' : 'idle');
+        setFlashcardError(null);
+        setQuizQuestions(loadedQuizQuestions.length > 0 ? loadedQuizQuestions : null);
+        setQuizStatus(loadedQuizQuestions.length > 0 ? 'success' : 'idle');
+        setQuizError(null);
+      } catch {
+        if (isCurrentRequest()) {
+          clearStudyState();
         }
       }
+    };
 
-      const savedDocumentId = sessionStorage.getItem(SESSION_STORAGE_DOCUMENT_ID_KEY);
-      if (savedDocumentId) {
-        setDocumentId(savedDocumentId);
-      }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const nextUserId = session?.user.id ?? null;
+      if (nextUserId !== activeUserId) {
+        activeUserId = nextUserId;
+        authVersionRef.current += 1;
+        loadVersion += 1;
+        clearStudyState();
 
-      const savedCards = sessionStorage.getItem(SESSION_STORAGE_FLASHCARDS_KEY);
-      if (savedCards) {
-        const parsedCards = JSON.parse(savedCards);
-        if (Array.isArray(parsedCards) && parsedCards.length > 0) {
-          setFlashcards(parsedCards);
-          setFlashcardStatus('success');
+        if (nextUserId) {
+          void loadMostRecentDocument(nextUserId, loadVersion);
         }
+      } else if (!nextUserId) {
+        clearStudyState();
       }
+    });
 
-      const savedQuiz = sessionStorage.getItem(SESSION_STORAGE_QUIZ_KEY);
-      if (savedQuiz) {
-        const parsedQuiz = JSON.parse(savedQuiz);
-        if (Array.isArray(parsedQuiz) && parsedQuiz.length > 0) {
-          setQuizQuestions(parsedQuiz);
-          setQuizStatus('success');
-        }
-      }
-    } catch {
-      // Ignore session storage parse errors
-    }
+    return () => {
+      active = false;
+      loadVersion += 1;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleProcessPdf = async (file: File) => {
+    const authVersion = authVersionRef.current;
     setStatus('extracting');
     setDocumentId(null);
     setErrorMessage(null);
@@ -96,7 +175,9 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     formData.append('file', file);
 
     const statusTimer = setTimeout(() => {
-      setStatus('analyzing');
+      if (authVersion === authVersionRef.current) {
+        setStatus('analyzing');
+      }
     }, 1500);
 
     try {
@@ -106,6 +187,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       });
 
       clearTimeout(statusTimer);
+      if (authVersion !== authVersionRef.current) return;
 
       const contentType = response.headers.get('content-type') || '';
       let result: any = null;
@@ -153,6 +235,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     } catch (error: any) {
       clearTimeout(statusTimer);
+      if (authVersion !== authVersionRef.current) return;
       setStatus('error');
       const msg = error?.message || '';
       if (msg.includes('Unexpected token') || msg.includes('JSON')) {
@@ -176,6 +259,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return false;
     }
 
+    const authVersion = authVersionRef.current;
     setFlashcardStatus('loading');
     setFlashcardError(null);
 
@@ -185,6 +269,8 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ documentId }),
       });
+
+      if (authVersion !== authVersionRef.current) return false;
 
       const contentType = response.headers.get('content-type') || '';
       let result: any = null;
@@ -220,6 +306,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       return true;
     } catch (error: any) {
+      if (authVersion !== authVersionRef.current) return false;
       setFlashcardStatus('error');
       setFlashcardError('Couldn\'t generate flashcards. Please check your connection and try again.');
       return false;
@@ -237,6 +324,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return false;
     }
 
+    const authVersion = authVersionRef.current;
     setQuizStatus('loading');
     setQuizError(null);
 
@@ -246,6 +334,8 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ documentId }),
       });
+
+      if (authVersion !== authVersionRef.current) return false;
 
       const contentType = response.headers.get('content-type') || '';
       let result: any = null;
@@ -281,6 +371,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       return true;
     } catch (error: any) {
+      if (authVersion !== authVersionRef.current) return false;
       setQuizStatus('error');
       setQuizError('Couldn\'t generate your quiz. Please check your connection and try again.');
       return false;
