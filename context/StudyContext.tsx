@@ -32,6 +32,7 @@ interface StudyContextType {
   handleGenerateFlashcards: () => Promise<boolean>;
   handleGenerateQuiz: () => Promise<boolean>;
   selectDocument: (id: string) => Promise<boolean>;
+  deleteDocument: (id: string) => Promise<boolean>;
   handleReset: () => void;
   setFlashcards: React.Dispatch<React.SetStateAction<Flashcard[] | null>>;
   setQuizQuestions: React.Dispatch<React.SetStateAction<QuizQuestion[] | null>>;
@@ -64,6 +65,42 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const authVersionRef = useRef(0);
   const documentsRequestVersionRef = useRef(0);
   const selectionRequestVersionRef = useRef(0);
+  const documentIdRef = useRef<string | null>(null);
+  const savedDocumentsRef = useRef<SavedDocument[]>([]);
+  const deletedDocumentIdsRef = useRef(new Set<string>());
+
+  const setActiveDocumentId = (id: string | null) => {
+    documentIdRef.current = id;
+    setDocumentId(id);
+  };
+
+  const setCurrentSavedDocuments = (documents: SavedDocument[]) => {
+    savedDocumentsRef.current = documents;
+    setSavedDocuments(documents);
+  };
+
+  const clearActiveDocument = () => {
+    setStatus('idle');
+    setStudyData(null);
+    setPageCount(null);
+    setActiveDocumentId(null);
+    setErrorMessage(null);
+    setFlashcards(null);
+    setFlashcardStatus('idle');
+    setFlashcardError(null);
+    setQuizQuestions(null);
+    setQuizStatus('idle');
+    setQuizError(null);
+
+    try {
+      sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      sessionStorage.removeItem(SESSION_STORAGE_DOCUMENT_ID_KEY);
+      sessionStorage.removeItem(SESSION_STORAGE_FLASHCARDS_KEY);
+      sessionStorage.removeItem(SESSION_STORAGE_QUIZ_KEY);
+    } catch {
+      // Ignore storage access errors.
+    }
+  };
 
   const refreshSavedDocuments = useCallback(async (authVersion: number) => {
     const requestVersion = ++documentsRequestVersionRef.current;
@@ -79,15 +116,15 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       const documents = result?.data?.documents;
       if (!response.ok || !result?.success || !Array.isArray(documents)) {
-        setSavedDocuments([]);
+        setCurrentSavedDocuments([]);
         return null;
       }
 
-      setSavedDocuments(documents);
+      setCurrentSavedDocuments(documents);
       return documents as SavedDocument[];
     } catch {
       if (isCurrentRequest()) {
-        setSavedDocuments([]);
+        setCurrentSavedDocuments([]);
       }
       return null;
     } finally {
@@ -105,7 +142,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setStatus('idle');
       setStudyData(null);
       setPageCount(null);
-      setDocumentId(null);
+      setActiveDocumentId(null);
       setErrorMessage(null);
       setFlashcards(null);
       setFlashcardStatus('idle');
@@ -113,11 +150,12 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       setQuizQuestions(null);
       setQuizStatus('idle');
       setQuizError(null);
-      setSavedDocuments([]);
+      setCurrentSavedDocuments([]);
       setDocumentsLoading(false);
       setSelectingDocumentId(null);
       selectionRequestVersionRef.current += 1;
       documentsRequestVersionRef.current += 1;
+      deletedDocumentIdsRef.current.clear();
 
       try {
         sessionStorage.removeItem(SESSION_STORAGE_KEY);
@@ -145,7 +183,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setStatus('idle');
           setStudyData(null);
           setPageCount(null);
-          setDocumentId(null);
+          setActiveDocumentId(null);
           setFlashcards(null);
           setFlashcardStatus('idle');
           setQuizQuestions(null);
@@ -171,7 +209,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setStatus('idle');
           setStudyData(null);
           setPageCount(null);
-          setDocumentId(null);
+          setActiveDocumentId(null);
           setFlashcards(null);
           setFlashcardStatus('idle');
           setQuizQuestions(null);
@@ -188,7 +226,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
         setStudyData(document.study_content);
         setPageCount(null);
-        setDocumentId(document.id);
+        setActiveDocumentId(document.id);
         setStatus('success');
         setErrorMessage(null);
         setFlashcards(loadedFlashcards.length > 0 ? loadedFlashcards : null);
@@ -236,7 +274,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     selectionRequestVersionRef.current += 1;
     setSelectingDocumentId(null);
     setStatus('extracting');
-    setDocumentId(null);
+    setActiveDocumentId(null);
     setPageCount(null);
     setErrorMessage(null);
     setFlashcards(null);
@@ -295,7 +333,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       setStudyData(result.data);
-      setDocumentId(result.documentId);
+      setActiveDocumentId(result.documentId);
       setPageCount(typeof result.pageCount === 'number' ? result.pageCount : null);
       setStatus('success');
       void refreshSavedDocuments(authVersion);
@@ -338,6 +376,13 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const result = await response.json();
       if (!isCurrentRequest()) return false;
 
+      if (deletedDocumentIdsRef.current.has(id)) {
+        if (documentIdRef.current === id) {
+          clearActiveDocument();
+        }
+        return false;
+      }
+
       const document = result?.data;
       if (
         !response.ok ||
@@ -346,6 +391,12 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         document.id !== id ||
         !document.study_content
       ) {
+        if (
+          documentIdRef.current === id &&
+          deletedDocumentIdsRef.current.has(id)
+        ) {
+          clearActiveDocument();
+        }
         return false;
       }
 
@@ -358,7 +409,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       setStudyData(document.study_content);
       setPageCount(null);
-      setDocumentId(document.id);
+      setActiveDocumentId(document.id);
       setStatus('success');
       setErrorMessage(null);
       setFlashcards(loadedFlashcards);
@@ -385,11 +436,71 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return true;
     } catch {
       // Keep the current document active if loading another one fails.
+      if (
+        isCurrentRequest() &&
+        documentIdRef.current === id &&
+        deletedDocumentIdsRef.current.has(id)
+      ) {
+        clearActiveDocument();
+      }
       return false;
     } finally {
       if (isCurrentRequest()) {
         setSelectingDocumentId(null);
       }
+    }
+  };
+
+  const deleteDocument = async (id: string): Promise<boolean> => {
+    const authVersion = authVersionRef.current;
+    const selectionVersion = selectionRequestVersionRef.current;
+
+    try {
+      const response = await fetch(`/api/documents/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+
+      if (authVersion !== authVersionRef.current) return false;
+      if (!response.ok || !result?.success) return false;
+
+      const remainingDocuments = savedDocumentsRef.current.filter(
+        (document) => document.id !== id
+      );
+      setCurrentSavedDocuments(remainingDocuments);
+      deletedDocumentIdsRef.current.add(id);
+
+      documentsRequestVersionRef.current += 1;
+      setDocumentsLoading(false);
+
+      if (documentIdRef.current !== id) {
+        return true;
+      }
+
+      if (selectionVersion !== selectionRequestVersionRef.current) {
+        return true;
+      }
+
+      selectionRequestVersionRef.current += 1;
+      setSelectingDocumentId(null);
+
+      const nextDocument = remainingDocuments[0];
+      if (nextDocument) {
+        const loaded = await selectDocument(nextDocument.id);
+        if (
+          !loaded &&
+          authVersion === authVersionRef.current &&
+          documentIdRef.current === id
+        ) {
+          clearActiveDocument();
+        }
+        return true;
+      }
+
+      clearActiveDocument();
+      return true;
+    } catch {
+      return false;
     }
   };
 
@@ -527,7 +638,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setStatus('idle');
     setStudyData(null);
     setPageCount(null);
-    setDocumentId(null);
+    setActiveDocumentId(null);
     setErrorMessage(null);
     setFlashcards(null);
     setFlashcardStatus('idle');
@@ -566,6 +677,7 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         handleGenerateFlashcards,
         handleGenerateQuiz,
         selectDocument,
+        deleteDocument,
         handleReset,
         setFlashcards,
         setQuizQuestions,

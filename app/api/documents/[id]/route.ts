@@ -110,3 +110,44 @@ export async function GET(request: NextRequest, { params }: DocumentRouteContext
     );
   });
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: DocumentRouteContext
+) {
+  const { id } = await params;
+
+  return withAuthenticatedApiUser(request, async (user, supabase) => {
+    if (!UUID_PATTERN.test(id)) {
+      return NextResponse.json(
+        { success: false, error: 'Document id must be a valid UUID.' },
+        { status: 400 }
+      );
+    }
+
+    const { data: deletedDocument, error: deleteError } = await supabase
+      .from('documents')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select('id')
+      .maybeSingle();
+
+    if (deleteError) {
+      console.error('Failed to delete study document:', deleteError);
+      return NextResponse.json(
+        { success: false, error: 'Could not delete the requested study document.' },
+        { status: 500 }
+      );
+    }
+
+    if (!deletedDocument) {
+      return NextResponse.json(
+        { success: false, error: 'Study document not found.' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  });
+}

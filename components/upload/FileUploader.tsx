@@ -76,7 +76,7 @@ export function FileUploader({ onProcessPdf, disabled = false }: FileUploaderPro
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto">
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           ref={fileInputRef}
@@ -93,34 +93,22 @@ export function FileUploader({ onProcessPdf, disabled = false }: FileUploaderPro
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`relative flex flex-col items-center justify-center p-8 md:p-12 border-2 border-dashed rounded-3xl cursor-pointer transition-all duration-300 ${
+            className={`relative flex min-h-[22rem] flex-col items-center justify-center p-8 sm:p-12 md:p-16 border-2 border-dashed rounded-3xl cursor-pointer transition-all duration-300 ${
               isDragging
                 ? 'border-yellow-400 bg-yellow-400/10 scale-[1.01]'
                 : 'border-slate-300 dark:border-slate-700/80 bg-white/70 dark:bg-slate-900/60 hover:border-yellow-400/70 dark:hover:border-yellow-400/70 hover:bg-yellow-400/5'
             } backdrop-blur-md shadow-sm group`}
           >
-            <div className="w-16 h-16 mb-4 rounded-2xl bg-yellow-400/10 text-yellow-600 dark:text-yellow-400 flex items-center justify-center group-hover:scale-110 border border-yellow-400/20 transition-transform duration-300">
-              <Upload className="w-8 h-8 stroke-[2]" />
+            <div className="w-20 h-20 mb-6 rounded-3xl bg-yellow-400/10 text-yellow-600 dark:text-yellow-400 flex items-center justify-center group-hover:scale-110 border border-yellow-400/20 transition-transform duration-300">
+              <Upload className="w-10 h-10 stroke-[2]" />
             </div>
 
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white text-center">
-              Drag & Drop your PDF study notes here
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white text-center">
+              Drag and drop your PDF here
             </h3>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 text-center">
+            <p className="mt-2 text-base text-slate-500 dark:text-slate-400 text-center">
               or <span className="text-yellow-600 dark:text-yellow-400 font-bold underline underline-offset-4">browse files</span> from your computer
             </p>
-
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                PDF format only
-              </span>
-              <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                Max file size: 4 MiB
-              </span>
-              <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                Max 100 pages
-              </span>
-            </div>
           </div>
         ) : (
           <div className="relative p-5 rounded-2xl border border-yellow-400/50 bg-white/90 dark:bg-slate-900/90 shadow-md backdrop-blur-md flex items-center justify-between gap-4 animate-in fade-in-50 zoom-in-95">

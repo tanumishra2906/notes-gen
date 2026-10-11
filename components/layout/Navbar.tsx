@@ -1,30 +1,51 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
-
-const NAV_ITEMS = [
-  { name: 'Home', href: '/' },
-  { name: 'Upload', href: '/upload' },
-  { name: 'Notes', href: '/notes' },
-  { name: 'Quiz', href: '/quiz' },
-  { name: 'Flashcards', href: '/flashcards' },
-  { name: 'Chat with AI', href: '/chat' },
-  { name: 'Dashboard', href: '/dashboard' },
-];
+import { supabase } from '@/lib/supabase';
 
 export const Navbar: React.FC = () => {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoaded, setAuthLoaded] = useState(false);
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(Boolean(session?.user));
+      setAuthLoaded(true);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const navItems = [
+    { name: 'Home', href: '/' },
+    ...(isAuthenticated
+      ? [
+          { name: 'Dashboard', href: '/dashboard' },
+          { name: 'Upload', href: '/upload' },
+          { name: 'Notes', href: '/notes' },
+          { name: 'Quiz', href: '/quiz' },
+          { name: 'Flashcards', href: '/flashcards' },
+        ]
+      : authLoaded
+        ? [{ name: 'Login / Sign up', href: '/login' }]
+        : []),
+  ];
 
   return (
     <nav className="w-full border-b border-slate-200/50 dark:border-slate-800/50 bg-white/30 dark:bg-[#0B0F19]/40 backdrop-blur-sm z-30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Desktop Navbar */}
         <div className="hidden md:flex items-center justify-center py-2.5 space-x-1 sm:space-x-2">
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const isActive =
               item.href === '/'
                 ? pathname === '/'
@@ -67,7 +88,7 @@ export const Navbar: React.FC = () => {
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
           <div className="md:hidden py-3 space-y-1.5 border-t border-slate-200 dark:border-slate-800 animate-in fade-in-50 duration-200">
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const isActive =
                 item.href === '/'
                   ? pathname === '/'

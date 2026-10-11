@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { FileText, MessageSquare, Layers, BrainCircuit, ArrowUpRight } from 'lucide-react';
+import { FileText, Layers, BrainCircuit, ArrowUpRight } from 'lucide-react';
 
 const TOOLKIT_CARDS = [
   {
@@ -14,16 +14,6 @@ const TOOLKIT_CARDS = [
     glowColor: 'group-hover:shadow-purple-500/10',
     href: '/notes',
     tag: 'Active',
-  },
-  {
-    title: 'Chat with AI',
-    description: 'Revise the essentials at a glance.',
-    icon: MessageSquare,
-    iconBg: 'bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20',
-    accentColor: 'group-hover:border-pink-400/50',
-    glowColor: 'group-hover:shadow-pink-500/10',
-    href: '/chat',
-    tag: 'Preview',
   },
   {
     title: 'Flashcards',
@@ -63,8 +53,8 @@ export const StudyToolkit: React.FC = () => {
         </p>
       </div>
 
-      {/* 4 Toolkit Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pt-4">
+      {/* Toolkit Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
         {TOOLKIT_CARDS.map((card) => {
           const Icon = card.icon;
           return (

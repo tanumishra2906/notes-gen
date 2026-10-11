@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { ProcessingStatus } from '@/types/study';
 import { FileText, Cpu, CheckCircle2 } from 'lucide-react';
@@ -10,21 +10,11 @@ interface UploadProgressProps {
 }
 
 export function UploadProgress({ status }: UploadProgressProps) {
-  const [currentStep, setCurrentStep] = useState(1);
-
-  useEffect(() => {
-    if (status === 'extracting') {
-      setCurrentStep(1);
-    } else if (status === 'analyzing') {
-      setCurrentStep(2);
-    } else if (status === 'success') {
-      setCurrentStep(3);
-    }
-  }, [status]);
+  const currentStep = status === 'success' ? 3 : status === 'analyzing' ? 2 : 1;
 
   const steps = [
-    { id: 1, name: 'Preparing PDF for Gemini', icon: FileText },
-    { id: 2, name: 'Reading PDF and generating notes with Gemini AI', icon: Cpu },
+    { id: 1, name: 'Preparing PDF', icon: FileText },
+    { id: 2, name: 'Reading PDF and generating notes', icon: Cpu },
     { id: 3, name: 'Generating Study Dashboard', icon: CheckCircle2 },
   ];
 
@@ -38,7 +28,7 @@ export function UploadProgress({ status }: UploadProgressProps) {
         Processing Study Material
       </h3>
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">
-        Gemini is reading the PDF, including its text and visual content...
+        Reading your PDF and preparing your study materials...
       </p>
 
       {/* Steps List */}

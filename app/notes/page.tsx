@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useStudy } from '@/context/StudyContext';
 import { DashboardTabs } from '@/components/dashboard/DashboardTabs';
-import { FileText, ArrowRight, Upload, BrainCircuit } from 'lucide-react';
+import { FileText, Upload, BrainCircuit } from 'lucide-react';
 
 export default function NotesPage() {
   const { studyData, handleReset } = useStudy();
@@ -26,31 +26,33 @@ export default function NotesPage() {
           </p>
         </div>
 
-        {studyData && (
-          <div className="flex flex-wrap items-center gap-3">
-            <Link
-              href="/quiz"
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-md shadow-yellow-500/20 transition-all"
-            >
-              <BrainCircuit className="w-4 h-4 stroke-[2.5]" />
-              <span>Quiz Mode</span>
-            </Link>
-            <Link
-              href="/flashcards"
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full border border-slate-200 dark:border-slate-700 transition-all"
-            >
-              <FileText className="w-4 h-4 stroke-[2.5]" />
-              <span>Flashcards Lab</span>
-            </Link>
-            <Link
-              href="/upload"
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full border border-slate-200 dark:border-slate-700 transition-all"
-            >
-              <Upload className="w-4 h-4 stroke-[2.5]" />
-              <span>Upload Another PDF</span>
-            </Link>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href="/upload"
+            className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 transition-all"
+          >
+            <Upload className="w-4 h-4 stroke-[2.5]" />
+            <span>Upload new PDF</span>
+          </Link>
+          {studyData && (
+            <>
+              <Link
+                href="/quiz"
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-md shadow-yellow-500/20 transition-all"
+              >
+                <BrainCircuit className="w-4 h-4 stroke-[2.5]" />
+                <span>Quiz Mode</span>
+              </Link>
+              <Link
+                href="/flashcards"
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full border border-slate-200 dark:border-slate-700 transition-all"
+              >
+                <FileText className="w-4 h-4 stroke-[2.5]" />
+                <span>Flashcards Lab</span>
+              </Link>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Main Content View */}
@@ -69,16 +71,6 @@ export default function NotesPage() {
             <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
               Upload your textbook chapters or lecture PDFs to automatically generate structured summaries, key concepts, vocabulary, and formulas.
             </p>
-          </div>
-
-          <div className="pt-2">
-            <Link
-              href="/upload"
-              className="inline-flex items-center gap-2 px-7 py-3.5 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/30 transition-all cursor-pointer"
-            >
-              <span>Upload Notes Now</span>
-              <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-            </Link>
           </div>
         </div>
       )}

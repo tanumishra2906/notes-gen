@@ -3,6 +3,23 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
+function getSafeNextPath(value: string | null): string {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) {
+    return '/dashboard';
+  }
+
+  try {
+    const destination = new URL(value, window.location.origin);
+    if (destination.origin !== window.location.origin) {
+      return '/dashboard';
+    }
+
+    return `${destination.pathname}${destination.search}${destination.hash}`;
+  } catch {
+    return '/dashboard';
+  }
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,7 +52,8 @@ export default function LoginPage() {
         if (error) {
           setMessage(error.message);
         } else {
-          window.location.href = '/dashboard';
+          const next = new URLSearchParams(window.location.search).get('next');
+          window.location.href = getSafeNextPath(next);
         }
       }
     } catch (error: unknown) {

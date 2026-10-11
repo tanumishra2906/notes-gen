@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, CheckCircle2, Download, FileText, LoaderCircle, Sparkles } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Download, FileText, LoaderCircle, Sparkles, Trash2 } from 'lucide-react';
 import { useStudy } from '@/context/StudyContext';
 import { downloadStudyNotesPdf } from '@/utils/exportNotesPdf';
 import type { StudyContent } from '@/types/study';
@@ -13,6 +13,9 @@ export default function DashboardPage() {
   const [downloadingDocumentIds, setDownloadingDocumentIds] = useState<string[]>([]);
   const [downloadErrors, setDownloadErrors] = useState<Record<string, string>>({});
   const [selectionErrors, setSelectionErrors] = useState<Record<string, string>>({});
+  const [deleteErrors, setDeleteErrors] = useState<Record<string, string>>({});
+  const [confirmDeleteIds, setConfirmDeleteIds] = useState<string[]>([]);
+  const [deletingDocumentIds, setDeletingDocumentIds] = useState<string[]>([]);
   const {
     studyData,
     documentId,
@@ -20,9 +23,14 @@ export default function DashboardPage() {
     documentsLoading,
     selectingDocumentId,
     selectDocument,
+    deleteDocument,
   } = useStudy();
 
+  const isDeletingDocument = (id: string) => deletingDocumentIds.includes(id);
+
   const handleOpenDocument = async (id: string) => {
+    if (isDeletingDocument(id)) return;
+
     setSelectionErrors((current) => {
       const next = { ...current };
       delete next[id];
@@ -45,6 +53,8 @@ export default function DashboardPage() {
     title: string
   ) => {
     event.stopPropagation();
+    if (isDeletingDocument(id)) return;
+
     setDownloadingDocumentIds((current) =>
       current.includes(id) ? current : [...current, id]
     );
@@ -70,6 +80,31 @@ export default function DashboardPage() {
       }));
     } finally {
       setDownloadingDocumentIds((current) => current.filter((itemId) => itemId !== id));
+    }
+  };
+
+  const handleDeleteDocument = async (id: string) => {
+    setDeleteErrors((current) => {
+      const next = { ...current };
+      delete next[id];
+      return next;
+    });
+    setConfirmDeleteIds((current) => current.filter((documentId) => documentId !== id));
+    setDeletingDocumentIds((current) =>
+      current.includes(id) ? current : [...current, id]
+    );
+
+    try {
+      if (!(await deleteDocument(id))) {
+        setDeleteErrors((current) => ({
+          ...current,
+          [id]: 'Could not delete this document. Please try again.',
+        }));
+      }
+    } finally {
+      setDeletingDocumentIds((current) =>
+        current.filter((documentId) => documentId !== id)
+      );
     }
   };
 
@@ -143,6 +178,8 @@ export default function DashboardPage() {
               const isLoading = document.id === selectingDocumentId;
 
               const isDownloading = downloadingDocumentIds.includes(document.id);
+              const isDeleting = isDeletingDocument(document.id);
+              const isRowBusy = isDeleting || isLoading || isDownloading;
 
               return (
                 <div
@@ -157,8 +194,9 @@ export default function DashboardPage() {
                     <button
                       type="button"
                       onClick={() => void handleOpenDocument(document.id)}
+                      disabled={isRowBusy}
                       aria-current={isActive ? 'true' : undefined}
-                      className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
+                      className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
                         <FileText className="w-5 h-5" />
@@ -197,7 +235,7 @@ export default function DashboardPage() {
                       onClick={(event) =>
                         void handleDownloadDocument(event, document.id, document.title)
                       }
-                      disabled={isDownloading}
+                      disabled={isRowBusy}
                       aria-label={`Download notes for ${document.title}`}
                       className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors hover:bg-slate-200 dark:hover:bg-slate-700 disabled:cursor-wait disabled:opacity-60"
                     >
@@ -213,6 +251,56 @@ export default function DashboardPage() {
                         </>
                       )}
                     </button>
+
+                    {confirmDeleteIds.includes(document.id) ? (
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="text-xs font-semibold text-red-600 dark:text-red-400">
+                          Delete?
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => void handleDeleteDocument(document.id)}
+                          disabled={isRowBusy}
+                          className="rounded-full bg-red-600 px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Yes
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setConfirmDeleteIds((current) =>
+                              current.filter((id) => id !== document.id)
+                            )
+                          }
+                          disabled={isRowBusy}
+                          className="rounded-full border border-slate-200 dark:border-slate-700 px-3 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setConfirmDeleteIds((current) =>
+                            current.includes(document.id)
+                              ? current
+                              : [...current, document.id]
+                          );
+                        }}
+                        disabled={isRowBusy}
+                        aria-label={`Delete ${document.title}`}
+                        className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-red-200 dark:border-red-900/70 bg-red-50 dark:bg-red-950/30 px-3 py-2 text-xs font-bold text-red-700 dark:text-red-300 transition-colors hover:bg-red-100 dark:hover:bg-red-950/60 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isDeleting ? (
+                          <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3.5 w-3.5" />
+                        )}
+                        {isDeleting ? 'Deleting' : 'Delete'}
+                      </button>
+                    )}
                   </div>
                   {selectionErrors[document.id] && (
                     <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
@@ -222,6 +310,11 @@ export default function DashboardPage() {
                   {downloadErrors[document.id] && (
                     <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
                       {downloadErrors[document.id]}
+                    </p>
+                  )}
+                  {deleteErrors[document.id] && (
+                    <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
+                      {deleteErrors[document.id]}
                     </p>
                   )}
                 </div>
@@ -240,13 +333,6 @@ export default function DashboardPage() {
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Upload a PDF to create your first study guide.
             </p>
-            <Link
-              href="/upload"
-              className="inline-flex items-center gap-2 rounded-full bg-yellow-400 px-5 py-2 text-xs font-bold text-slate-950 transition-colors hover:bg-yellow-300"
-            >
-              <FileText className="h-4 w-4" />
-              Upload Study Material
-            </Link>
           </div>
         )}
       </section>
@@ -259,12 +345,6 @@ export default function DashboardPage() {
             className="px-6 py-3 text-xs font-bold text-slate-950 bg-yellow-400 hover:bg-yellow-300 rounded-full shadow-md shadow-yellow-500/20 transition-all"
           >
             Upload New Material
-          </Link>
-          <Link
-            href="/notes"
-            className="px-6 py-3 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-all"
-          >
-            View Study Notes
           </Link>
         </div>
       </div>
