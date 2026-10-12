@@ -2,100 +2,211 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { FileText, Layers, BrainCircuit, ArrowUpRight } from 'lucide-react';
+import {
+  BookOpenText,
+  BrainCircuit,
+  Check,
+  FileText,
+  Layers,
+  MessageCircle,
+  Sparkles,
+} from 'lucide-react';
+import { ScrollReveal } from '@/components/shared/ScrollReveal';
 
 const TOOLKIT_CARDS = [
   {
     title: 'Summarize',
-    description: 'Get the important points instantly.',
-    icon: FileText,
-    iconBg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
-    accentColor: 'group-hover:border-purple-400/50',
-    glowColor: 'group-hover:shadow-purple-500/10',
+    description: 'A quick overview of the key ideas in your notes.',
     href: '/notes',
-    tag: 'Active',
+    kind: 'summary',
+    icon: FileText,
+    cardStyle: 'bg-tint-lavender text-foreground',
+    iconStyle: 'bg-white/70 text-violet-700',
+  },
+  {
+    title: 'Chat with AI',
+    description: 'A new way to explore your study materials.',
+    kind: 'chat',
+    icon: MessageCircle,
+    cardStyle: 'bg-tint-blue text-foreground',
+    iconStyle: 'bg-white/70 text-blue-700',
   },
   {
     title: 'Flashcards',
-    description: 'Turn concepts into quick revision.',
-    icon: Layers,
-    iconBg: 'bg-yellow-400/10 text-yellow-600 dark:text-yellow-400 border-yellow-400/20',
-    accentColor: 'group-hover:border-yellow-400/50',
-    glowColor: 'group-hover:shadow-yellow-500/10',
+    description: 'Review important concepts with flashcards.',
     href: '/flashcards',
-    tag: 'Preview',
+    kind: 'flashcards',
+    icon: Layers,
+    cardStyle: 'bg-gradient-to-br from-amber-500 via-amber-500 to-orange-600 text-white',
+    iconStyle: 'bg-white/20 text-white',
+    featured: true,
   },
   {
     title: 'Quiz Mode',
-    description: 'Test yourself and track your score.',
-    icon: BrainCircuit,
-    iconBg: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20',
-    accentColor: 'group-hover:border-teal-400/50',
-    glowColor: 'group-hover:shadow-teal-500/10',
+    description: 'Check your understanding with a quiz.',
     href: '/quiz',
-    tag: 'Preview',
+    kind: 'quiz',
+    icon: BrainCircuit,
+    cardStyle: 'bg-tint-mint text-foreground',
+    iconStyle: 'bg-white/70 text-emerald-700',
   },
-];
+] as const;
 
-export const StudyToolkit: React.FC = () => {
+type PreviewKind = (typeof TOOLKIT_CARDS)[number]['kind'];
+
+function Preview({ kind }: { kind: PreviewKind }) {
+  if (kind === 'summary') {
+    return (
+      <div className="h-full p-4 text-left" aria-hidden="true">
+        <div className="mb-3 flex items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-50 text-violet-700">
+            <FileText className="h-4 w-4" />
+          </span>
+          <h4 className="text-xs font-bold text-slate-800">Photosynthesis</h4>
+        </div>
+        <p className="mb-2 text-[10px] font-semibold text-slate-600">Key notes</p>
+        <div className="space-y-2">
+          <p className="text-[10px] leading-snug text-slate-600">Plants use sunlight to make their own food.</p>
+          <p className="text-[10px] leading-snug text-slate-600">Leaves take in carbon dioxide and release oxygen.</p>
+          <p className="text-[10px] leading-snug text-slate-600">Chlorophyll captures light energy.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (kind === 'flashcards') {
+    return (
+      <div className="toolkit-card__flip h-full w-full p-4" aria-hidden="true">
+        <div className="toolkit-card__flip-inner">
+          <div className="toolkit-card__flip-face rounded-2xl border border-amber-100 bg-white p-4 text-slate-800 shadow-sm">
+            <span className="font-label text-[9px] font-semibold uppercase tracking-widest text-amber-700">
+              Photosynthesis
+            </span>
+            <p className="mt-3 text-sm font-bold">What does chlorophyll do?</p>
+            <span className="mt-auto pt-3 text-[9px] text-slate-400">Hover or focus to flip</span>
+          </div>
+          <div className="toolkit-card__flip-face toolkit-card__flip-back rounded-2xl border border-amber-100 bg-white p-4 text-slate-800 shadow-sm">
+            <span className="font-label text-[9px] font-semibold uppercase tracking-widest text-amber-700">
+              Answer
+            </span>
+            <p className="mt-3 text-xs leading-relaxed">It absorbs light energy that plants use to make food.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (kind === 'quiz') {
+    return (
+      <div className="h-full p-4 text-left" aria-hidden="true">
+        <div className="mb-3 flex items-start gap-2">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+            <BookOpenText className="h-4 w-4" />
+          </span>
+          <p className="pt-0.5 text-[10px] font-semibold leading-snug text-slate-700">
+            Which pigment absorbs light for photosynthesis?
+          </p>
+        </div>
+        <div className="space-y-1.5 text-[9px]">
+          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1.5 font-medium text-emerald-800">
+            <Check className="h-3 w-3" /> Chlorophyll
+          </div>
+          <div className="rounded-lg border border-slate-100 px-2 py-1.5 text-slate-500">Hemoglobin</div>
+          <div className="rounded-lg border border-slate-100 px-2 py-1.5 text-slate-500">Keratin</div>
+          <div className="rounded-lg border border-slate-100 px-2 py-1.5 text-slate-500">Melanin</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <section id="instant-study-toolkit" className="py-12 scroll-mt-24 space-y-8">
-      {/* Section Header */}
-      <div className="text-center space-y-2">
-        <span className="text-xs font-black tracking-widest uppercase text-yellow-600 dark:text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-full border border-yellow-400/30">
-          INSTANT STUDY TOOLKIT
-        </span>
-        <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-          Everything you need to master your subject
-        </h2>
-        <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
-          Transform any textbook chapter or notes document into interactive AI study tools.
-        </p>
+    <div className="flex h-full flex-col justify-center gap-3 p-4" aria-hidden="true">
+      <div className="ml-auto max-w-[85%] rounded-xl rounded-br-sm bg-blue-600 px-3 py-2 text-[9px] leading-snug text-white">
+        What is photosynthesis?
       </div>
-
-      {/* Toolkit Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
-        {TOOLKIT_CARDS.map((card) => {
-          const Icon = card.icon;
-          return (
-            <Link
-              key={card.title}
-              href={card.href}
-              className={`group relative flex flex-col justify-between p-6 rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl ${card.accentColor} ${card.glowColor}`}
-            >
-              <div className="space-y-4">
-                {/* Top Row: Icon & Tag */}
-                <div className="flex items-center justify-between">
-                  <div
-                    className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${card.iconBg}`}
-                  >
-                    <Icon className="w-6 h-6 stroke-[2]" />
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                    {card.tag}
-                  </span>
-                </div>
-
-                {/* Title & Description */}
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-yellow-500 dark:group-hover:text-yellow-400 transition-colors flex items-center gap-1">
-                    <span>{card.title}</span>
-                  </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                    {card.description}
-                  </p>
-                </div>
-              </div>
-
-              {/* Bottom Action Hint */}
-              <div className="pt-6 mt-4 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
-                <span>Explore tool</span>
-                <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-yellow-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-              </div>
-            </Link>
-          );
-        })}
+      <div className="max-w-[90%] rounded-xl rounded-bl-sm bg-slate-100 px-3 py-2 text-[9px] leading-snug text-slate-600">
+        A process plants use to turn light into chemical energy.
       </div>
-    </section>
+    </div>
   );
-};
+}
+
+export const StudyToolkit: React.FC = () => (
+  <section id="instant-study-toolkit" className="scroll-mt-28 space-y-8 py-8 sm:py-12">
+    <div className="mx-auto max-w-2xl space-y-3 text-center">
+      <span className="font-label text-xs font-bold uppercase tracking-[0.18em] text-accent-strong">
+        Your study toolkit
+      </span>
+      <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+        A clearer way to study
+      </h2>
+      <p className="text-muted">
+        Choose a tool to explore your study materials in a different way.
+      </p>
+    </div>
+
+    <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 xl:grid-cols-4">
+      {TOOLKIT_CARDS.map((card, index) => {
+        const Icon = card.icon;
+        const isComingSoon = card.kind === 'chat';
+        const cardContent = (
+          <div
+            className={`toolkit-card relative h-[22rem] overflow-hidden rounded-[30px] p-5 ${
+              'featured' in card && card.featured ? 'sm:h-[23.5rem]' : ''
+            } ${card.cardStyle} ${
+              isComingSoon
+                ? 'cursor-default opacity-80'
+                : 'cursor-pointer focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+            } w-[min(82vw,19rem)] shrink-0 snap-start sm:w-auto`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="text-lg font-extrabold tracking-tight">{card.title}</h3>
+                <p
+                  className={`mt-1 max-w-[14rem] text-xs leading-relaxed ${
+                    'featured' in card && card.featured ? 'text-white/85' : 'text-slate-600'
+                  }`}
+                >
+                  {card.description}
+                </p>
+              </div>
+              <span
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${card.iconStyle}`}
+              >
+                <Icon className="h-5 w-5" />
+              </span>
+            </div>
+            {isComingSoon && (
+              <span className="mt-3 inline-flex items-center gap-1 rounded-full bg-white/70 px-2.5 py-1 font-label text-[9px] font-bold uppercase tracking-wider text-blue-800">
+                <Sparkles className="h-3 w-3" />
+                Coming soon
+              </span>
+            )}
+            <div className="toolkit-card__preview absolute -bottom-4 left-3 right-3 h-[13.5rem] overflow-hidden rounded-t-[22px] bg-white shadow-[0_-5px_22px_rgba(40,35,25,0.1)]">
+              <Preview kind={card.kind} />
+            </div>
+          </div>
+        );
+
+        return (
+          <ScrollReveal
+            key={`${card.title}-${index}`}
+            delay={index * 100}
+            className="shrink-0 sm:shrink"
+          >
+            {isComingSoon ? (
+              <div tabIndex={0} className="rounded-[30px] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+                {cardContent}
+              </div>
+            ) : (
+              <Link href={card.href} aria-label={`Open ${card.title}`} className="block rounded-[30px]">
+                {cardContent}
+                <span className="sr-only">Open {card.title}</span>
+              </Link>
+            )}
+          </ScrollReveal>
+        );
+      })}
+    </div>
+  </section>
+);

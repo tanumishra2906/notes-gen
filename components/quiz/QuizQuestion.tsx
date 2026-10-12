@@ -33,7 +33,7 @@ export const QuizQuestion: React.FC<QuizQuestionProps> = ({
       {/* Category & Topic Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-400/10 text-amber-700 dark:text-yellow-400 border border-yellow-400/20 flex items-center gap-1.5">
+          <span className="flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-bold text-accent-strong">
             <Sparkles className="w-3.5 h-3.5" />
             <span>{question.topic || 'General'}</span>
           </span>
@@ -46,13 +46,13 @@ export const QuizQuestion: React.FC<QuizQuestionProps> = ({
           </span>
         </div>
 
-        <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+        <span className="sr-only">
           Question {questionNumber} of {totalQuestions}
         </span>
       </div>
 
       {/* Main Question Text */}
-      <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white leading-tight">
+      <h2 className="max-w-5xl text-[clamp(1.6rem,3.2vw,3.25rem)] font-extrabold leading-[1.16] tracking-tight text-foreground">
         {question.question}
       </h2>
     </div>

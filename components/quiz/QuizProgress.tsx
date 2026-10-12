@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Trophy, CheckCircle2, XCircle, Target } from 'lucide-react';
+import { CheckCircle2, Target, XCircle } from 'lucide-react';
 
 interface QuizProgressProps {
   currentIndex: number;
@@ -22,66 +22,64 @@ export const QuizProgress: React.FC<QuizProgressProps> = ({
   const progressPercent = Math.round((currentStep / totalQuestions) * 100);
   const answeredTotal = correctCount + incorrectCount;
   const accuracy = answeredTotal > 0 ? Math.round((correctCount / answeredTotal) * 100) : 0;
+  const circumference = 2 * Math.PI * 42;
 
   return (
-    <div className="w-full space-y-4">
-      {/* Top Question Progress Header */}
-      <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-400">
-        <div className="flex items-center gap-2">
-          <span className="text-slate-900 dark:text-white font-extrabold text-base">
-            Question {currentStep}
-          </span>
-          <span className="text-slate-400 dark:text-slate-500 font-medium">
-            / {totalQuestions}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-yellow-400/10 text-amber-700 dark:text-yellow-400 border border-yellow-400/20 text-xs">
-          <Target className="w-3.5 h-3.5" />
-          <span>Accuracy: {accuracy}%</span>
+    <aside className="h-fit rounded-[2rem] border border-card-border bg-card p-6 shadow-lg shadow-black/5 lg:sticky lg:top-28 lg:p-8">
+      <div className="flex flex-col items-center text-center">
+        <div className="relative flex h-44 w-44 items-center justify-center">
+          <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="var(--card-border)" strokeWidth="8" />
+            <circle
+              cx="50"
+              cy="50"
+              r="42"
+              fill="none"
+              stroke="var(--accent)"
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={circumference * (1 - progressPercent / 100)}
+              className="transition-[stroke-dashoffset] duration-500"
+            />
+          </svg>
+          <div>
+            <span className="block text-4xl font-extrabold tracking-tight text-foreground">
+              {currentStep}/{totalQuestions}
+            </span>
+            <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+              Progress
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-300 rounded-full transition-all duration-300 ease-out"
-          style={{ width: `${progressPercent}%` }}
-        />
-      </div>
-
-      {/* Metrics Bar */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 p-3 rounded-2xl bg-slate-100/70 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/60 text-center">
-        <div className="flex flex-col items-center justify-center p-1.5">
-          <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-semibold mb-0.5">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Correct</span>
+      <div className="mt-7 border-t border-card-border pt-6">
+        <h2 className="mb-4 flex items-center gap-2 text-sm font-bold text-foreground">
+          <Target className="h-4 w-4 text-accent-strong" />
+          Your progress
+        </h2>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-2xl bg-surface/80 px-4 py-3">
+            <span className="flex items-center gap-2 text-sm font-medium text-muted">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              Correct Answers
+            </span>
+            <span className="text-lg font-extrabold text-foreground">{correctCount}</span>
           </div>
-          <span className="text-lg font-black text-slate-900 dark:text-white">
-            {correctCount}
-          </span>
-        </div>
-
-        <div className="flex flex-col items-center justify-center p-1.5 border-x border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-1 text-rose-600 dark:text-rose-400 text-xs font-semibold mb-0.5">
-            <XCircle className="w-3.5 h-3.5" />
-            <span>Incorrect</span>
+          <div className="flex items-center justify-between rounded-2xl bg-surface/80 px-4 py-3">
+            <span className="flex items-center gap-2 text-sm font-medium text-muted">
+              <XCircle className="h-4 w-4 text-rose-500" />
+              Incorrect
+            </span>
+            <span className="text-lg font-extrabold text-foreground">{incorrectCount}</span>
           </div>
-          <span className="text-lg font-black text-slate-900 dark:text-white">
-            {incorrectCount}
-          </span>
-        </div>
-
-        <div className="flex flex-col items-center justify-center p-1.5">
-          <div className="flex items-center gap-1 text-yellow-600 dark:text-yellow-400 text-xs font-semibold mb-0.5">
-            <Trophy className="w-3.5 h-3.5" />
-            <span>Accuracy</span>
+          <div className="flex items-center justify-between rounded-2xl bg-surface/80 px-4 py-3">
+            <span className="text-sm font-medium text-muted">Accuracy</span>
+            <span className="text-lg font-extrabold text-foreground">{accuracy}%</span>
           </div>
-          <span className="text-lg font-black text-slate-900 dark:text-white">
-            {accuracy}%
-          </span>
         </div>
       </div>
-    </div>
+    </aside>
   );
 };

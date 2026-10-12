@@ -7,6 +7,7 @@ import { QuizOption } from './QuizOption';
 import { QuizProgress } from './QuizProgress';
 import { QuizResults } from './QuizResults';
 import { BrainCircuit, ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react';
+import { PageDoodles } from '@/components/shared/PageDoodles';
 
 interface QuizLabProps {
   initialQuestions: QuizQuestionType[];
@@ -136,115 +137,127 @@ export const QuizLab: React.FC<QuizLabProps> = ({
 
   const isLastQuestion = currentIndex === questions.length - 1;
 
+  const progressPercent = Math.round(((currentIndex + 1) / questions.length) * 100);
+
   return (
-    <div className="w-full max-w-3xl mx-auto space-y-8 animate-in fade-in-50 duration-300">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/80 dark:border-slate-800/80">
+    <div className="study-page animate-in fade-in-50 duration-300">
+      <PageDoodles />
+      <header className="study-page__content flex flex-col justify-between gap-5 border-b border-card-border pb-5 sm:flex-row sm:items-end">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 mb-2">
-            <BrainCircuit className="w-3.5 h-3.5" />
-            <span>AI Quiz Laboratory</span>
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 font-label text-xs font-bold text-accent-strong">
+            <BrainCircuit className="h-3.5 w-3.5" />
+            Quiz
           </div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Quiz Time! 🧠
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Let's see how much you really remember from your study notes.
+          <h1 className="study-page__title font-extrabold tracking-tight text-foreground">Quiz Mode</h1>
+          <p className="study-page__subtitle mt-2 text-muted">
+            Answer each question and review your progress as you go.
           </p>
         </div>
+        <button
+          onClick={onRegenerate}
+          disabled={isRegenerating}
+          className="inline-flex w-fit items-center gap-2 rounded-full border border-card-border bg-surface/80 px-5 py-3 text-sm font-bold text-foreground transition-colors hover:bg-surface-raised disabled:opacity-50"
+        >
+          <RotateCcw className={`h-4 w-4 ${isRegenerating ? 'animate-spin' : ''}`} />
+          <span>Generate New Quiz</span>
+        </button>
+      </header>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onRegenerate}
-            disabled={isRegenerating}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 transition-all cursor-pointer disabled:opacity-50"
-          >
-            <RotateCcw className={`w-3.5 h-3.5 ${isRegenerating ? 'animate-spin' : ''}`} />
-            <span>Generate New Quiz</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Progress & Sidebar Metrics */}
-      <QuizProgress
-        currentIndex={currentIndex}
-        totalQuestions={questions.length}
-        correctCount={correctCount}
-        incorrectCount={incorrectCount}
-      />
-
-      {/* Main Question Card */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md shadow-xl shadow-yellow-500/5 space-y-6">
-        <QuizQuestion
-          question={currentQuestion}
-          questionNumber={currentIndex + 1}
-          totalQuestions={questions.length}
-        />
-
-        {/* Answer Options */}
-        <div className="space-y-3 pt-2">
-          {currentQuestion.options.map((optionText, idx) => {
-            const letter = OPTION_LETTERS[idx] || `${idx + 1}`;
-            const isSelected = currentSelectedOption === idx;
-            const isCorrectAnswer = idx === currentQuestion.correctAnswer;
-
-            return (
-              <QuizOption
-                key={idx}
-                optionLetter={letter}
-                optionText={optionText}
-                isSelected={isSelected}
-                isSubmitted={isCurrentSubmitted}
-                isCorrectAnswer={isCorrectAnswer}
-                isUserSelection={isSelected}
-                onSelect={() => handleSelectOption(idx)}
-              />
-            );
-          })}
-        </div>
-
-        {/* Answer Explanation Box (Revealed after submission) */}
-        {isCurrentSubmitted && (
-          <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 space-y-2 animate-in fade-in-50 duration-200">
-            <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white text-sm">
-              <span className="text-lg">💡</span>
-              <span>Explanation</span>
+      <div className="study-page__content grid flex-1 items-stretch gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(19rem,0.9fr)] xl:gap-7">
+        <section className="flex min-h-[min(68svh,48rem)] flex-col rounded-[2rem] border border-card-border bg-card p-5 shadow-xl shadow-black/5 sm:p-8 xl:p-10">
+          <div className="mb-7 space-y-3">
+            <div className="flex items-center justify-between text-sm font-bold text-muted">
+              <span>Question progress</span>
+              <span className="text-foreground">{currentIndex + 1} / {questions.length}</span>
             </div>
-            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-              {currentQuestion.explanation}
-            </p>
+            <div
+              className="h-2.5 overflow-hidden rounded-full bg-card-border"
+              role="progressbar"
+              aria-label="Quiz progress"
+              aria-valuenow={currentIndex + 1}
+              aria-valuemin={1}
+              aria-valuemax={questions.length}
+            >
+              <div
+                className="h-full rounded-full bg-accent transition-[width] duration-500"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
           </div>
-        )}
 
-        {/* Action Button Bar */}
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
-            {!isCurrentSubmitted
-              ? 'Select an option and submit your answer'
-              : isLastQuestion
-              ? 'Final question completed'
-              : 'Proceed to next question'}
-          </span>
+          <QuizQuestion
+            question={currentQuestion}
+            questionNumber={currentIndex + 1}
+            totalQuestions={questions.length}
+          />
 
-          {!isCurrentSubmitted ? (
-            <button
-              onClick={handleSubmitAnswer}
-              disabled={currentSelectedOption === undefined}
-              className="inline-flex items-center gap-2 px-7 py-3 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-md shadow-yellow-500/20 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
-            >
-              <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
-              <span>Submit Answer</span>
-            </button>
-          ) : (
-            <button
-              onClick={handleNextQuestion}
-              className="inline-flex items-center gap-2 px-7 py-3 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-md shadow-yellow-500/20 transition-all cursor-pointer active:scale-95"
-            >
-              <span>{isLastQuestion ? 'View Final Results 🎉' : 'Next Question'}</span>
-              <ArrowRight className="w-4 h-4 stroke-[2.5]" />
-            </button>
+          <div className="mt-7 grid gap-3 xl:mt-9 xl:grid-cols-2 xl:gap-4">
+            {currentQuestion.options.map((optionText, idx) => {
+              const letter = OPTION_LETTERS[idx] || `${idx + 1}`;
+              const isSelected = currentSelectedOption === idx;
+              const isCorrectAnswer = idx === currentQuestion.correctAnswer;
+              return (
+                <QuizOption
+                  key={`${currentQuestion.id}-${optionText}-${idx}`}
+                  optionLetter={letter}
+                  optionText={optionText}
+                  isSelected={isSelected}
+                  isSubmitted={isCurrentSubmitted}
+                  isCorrectAnswer={isCorrectAnswer}
+                  isUserSelection={isSelected}
+                  onSelect={() => handleSelectOption(idx)}
+                />
+              );
+            })}
+          </div>
+
+          {isCurrentSubmitted && (
+            <div className="mt-6 space-y-2 rounded-2xl border border-card-border bg-surface/80 p-5">
+              <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+                {currentSelectedOption === currentQuestion.correctAnswer
+                  ? <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                  : <span className="text-rose-500">×</span>}
+                <span>{currentSelectedOption === currentQuestion.correctAnswer ? 'Correct answer' : 'Not quite'}</span>
+              </div>
+              <p className="text-sm leading-relaxed text-muted">{currentQuestion.explanation}</p>
+            </div>
           )}
-        </div>
+
+          <div className="mt-auto flex flex-col gap-4 border-t border-card-border pt-6 sm:flex-row sm:items-center sm:justify-between sm:pt-8">
+            <span className="text-sm font-medium text-muted">
+              {!isCurrentSubmitted
+                ? 'Select an option, then submit your answer.'
+                : isLastQuestion
+                  ? 'You have completed the final question.'
+                  : 'Your answer is saved. Continue when ready.'}
+            </span>
+            {!isCurrentSubmitted ? (
+              <button
+                onClick={handleSubmitAnswer}
+                disabled={currentSelectedOption === undefined}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-zinc-950 shadow-md shadow-amber-900/10 transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Submit Answer</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleNextQuestion}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-7 py-3.5 text-sm font-bold text-zinc-950 shadow-md shadow-amber-900/10 transition-colors hover:bg-accent-hover"
+              >
+                <span>{isLastQuestion ? 'View Final Results' : 'Next Question'}</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </section>
+
+        <QuizProgress
+          currentIndex={currentIndex}
+          totalQuestions={questions.length}
+          correctCount={correctCount}
+          incorrectCount={incorrectCount}
+        />
       </div>
     </div>
   );

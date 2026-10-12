@@ -14,6 +14,8 @@ interface SavedDocument {
 }
 
 interface StudyContextType {
+  isAuthenticated: boolean;
+  authLoaded: boolean;
   status: ProcessingStatus;
   studyData: StudyContent | null;
   pageCount: number | null;
@@ -46,6 +48,8 @@ const SESSION_STORAGE_QUIZ_KEY = 'studydesk_current_quiz';
 const SESSION_STORAGE_DOCUMENT_ID_KEY = 'studydesk_current_document_id';
 
 export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoaded, setAuthLoaded] = useState(false);
   const [status, setStatus] = useState<ProcessingStatus>('idle');
   const [studyData, setStudyData] = useState<StudyContent | null>(null);
   const [pageCount, setPageCount] = useState<number | null>(null);
@@ -248,6 +252,9 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       const nextUserId = session?.user.id ?? null;
+      setIsAuthenticated(Boolean(nextUserId));
+      setAuthLoaded(true);
+
       if (nextUserId !== activeUserId) {
         activeUserId = nextUserId;
         authVersionRef.current += 1;
@@ -659,6 +666,8 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <StudyContext.Provider
       value={{
+        isAuthenticated,
+        authLoaded,
         status,
         studyData,
         pageCount,

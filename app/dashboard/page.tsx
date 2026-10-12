@@ -72,7 +72,7 @@ export default function DashboardPage() {
         throw new Error('Could not download this document. Please try again.');
       }
 
-      downloadStudyNotesPdf(studyContent, title);
+      await downloadStudyNotesPdf(studyContent, title);
     } catch {
       setDownloadErrors((current) => ({
         ...current,

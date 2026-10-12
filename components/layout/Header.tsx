@@ -10,7 +10,7 @@ export const Header: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <header className="w-full border-b border-slate-200/70 dark:border-slate-800/80 bg-white/50 dark:bg-[#0B0F19]/60 backdrop-blur-md sticky top-0 z-40 transition-colors">
+    <header className="w-full border-b border-slate-200/70 dark:border-slate-800/80 bg-white dark:bg-[#0B0F19] sticky top-0 z-40 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">

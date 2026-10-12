@@ -5,7 +5,8 @@ import { Flashcard as FlashcardType, FlashcardDifficulty } from '@/types/flashca
 import { Flashcard } from './Flashcard';
 import { FlashcardControls } from './FlashcardControls';
 import { FlashcardProgress } from './FlashcardProgress';
-import { Layers, RotateCcw, Sparkles } from 'lucide-react';
+import { Layers, RotateCcw } from 'lucide-react';
+import { PageDoodles } from '@/components/shared/PageDoodles';
 
 interface FlashcardLabProps {
   initialCards: FlashcardType[];
@@ -107,66 +108,63 @@ export const FlashcardLab: React.FC<FlashcardLabProps> = ({
   const currentDifficulty = cardDifficulties[currentCard.id] || currentCard.difficulty || 'medium';
 
   return (
-    <div className="w-full space-y-8 animate-in fade-in-50 duration-300">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/80 dark:border-slate-800/80">
+    <div className="study-page animate-in fade-in-50 duration-300">
+      <PageDoodles />
+      <header className="study-page__content flex flex-col justify-between gap-5 border-b border-card-border pb-5 sm:flex-row sm:items-end">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-yellow-400/10 text-amber-700 dark:text-yellow-400 border border-yellow-400/20 mb-2">
-            <Layers className="w-3.5 h-3.5" />
-            <span>Interactive Spaced Repetition</span>
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 font-label text-xs font-bold text-accent-strong">
+            <Layers className="h-3.5 w-3.5" />
+            Flashcards
           </div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            Flashcard Lab
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Generated from your uploaded study material. Flip cards to test your retention.
+          <h1 className="study-page__title font-extrabold tracking-tight text-foreground">Flashcards</h1>
+          <p className="study-page__subtitle mt-2 text-muted">
+            Review each prompt, reveal the answer, and track the cards you have mastered.
           </p>
         </div>
-
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="rounded-full border border-card-border bg-card px-4 py-2.5 text-sm font-bold text-foreground">
+            Card {currentIndex + 1} / {cards.length}
+          </span>
           <button
             onClick={onRegenerate}
             disabled={isRegenerating}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 transition-all cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-full border border-card-border bg-surface/80 px-5 py-3 text-sm font-bold text-foreground transition-colors hover:bg-surface-raised disabled:opacity-50"
           >
-            <RotateCcw className={`w-3.5 h-3.5 ${isRegenerating ? 'animate-spin' : ''}`} />
+            <RotateCcw className={`h-4 w-4 ${isRegenerating ? 'animate-spin' : ''}`} />
             <span>Regenerate Cards</span>
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* Progress Bar & Counters */}
       <FlashcardProgress
         currentIndex={currentIndex}
         totalCards={cards.length}
         masteredCount={masteredIds.size}
       />
 
-      {/* The Flashcard View */}
-      <div className="py-2">
-        <Flashcard
-          card={currentCard}
-          isFlipped={isFlipped}
-          onFlip={handleFlip}
-          isMastered={isCurrentMastered}
-          overrideDifficulty={currentDifficulty}
-        />
-      </div>
-
-      {/* Interaction Controls Toolbar */}
-      <FlashcardControls
-        currentIndex={currentIndex}
-        totalCards={cards.length}
+      <Flashcard
+        card={currentCard}
         isFlipped={isFlipped}
         onFlip={handleFlip}
-        onPrevious={handlePrevious}
-        onNext={handleNext}
-        onShuffle={handleShuffle}
         isMastered={isCurrentMastered}
-        onToggleMastered={handleToggleMastered}
-        currentDifficulty={currentDifficulty}
-        onSetDifficulty={handleSetDifficulty}
+        overrideDifficulty={currentDifficulty}
       />
+
+      <div className="study-page__content">
+        <FlashcardControls
+          currentIndex={currentIndex}
+          totalCards={cards.length}
+          isFlipped={isFlipped}
+          onFlip={handleFlip}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+          onShuffle={handleShuffle}
+          isMastered={isCurrentMastered}
+          onToggleMastered={handleToggleMastered}
+          currentDifficulty={currentDifficulty}
+          onSetDifficulty={handleSetDifficulty}
+        />
+      </div>
     </div>
   );
 };

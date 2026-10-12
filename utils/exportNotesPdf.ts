@@ -1,6 +1,5 @@
 'use client';
 
-import { jsPDF } from 'jspdf';
 import type { StudyContent } from '@/types/study';
 
 const PAGE_WIDTH = 210;
@@ -24,7 +23,11 @@ function safeFilename(title: string): string {
   return `${safeTitle || 'study-guide'}.pdf`;
 }
 
-export function downloadStudyNotesPdf(data: StudyContent, title?: string): void {
+export async function downloadStudyNotesPdf(
+  data: StudyContent,
+  title?: string
+): Promise<void> {
+  const { jsPDF } = await import('jspdf');
   const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
   const lineHeight = 5;
   let y = MARGIN;
