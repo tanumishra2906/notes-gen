@@ -80,7 +80,7 @@ export function DashboardTabs({ data, onReset }: DashboardTabsProps) {
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6 animate-in fade-in-50 duration-500">
       {/* Top Action Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/80 dark:bg-slate-900/80 p-4 rounded-3xl border border-slate-200 dark:border-slate-800/80 backdrop-blur-md">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/80 dark:bg-slate-900/80 p-4 rounded-3xl border border-slate-200 dark:border-slate-800/80">
         <button
           onClick={onReset}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"

@@ -16,7 +16,7 @@ export const QuizEmptyState: React.FC<QuizEmptyStateProps> = ({
   isLoading = false,
 }) => {
   return (
-    <div className="w-full max-w-2xl mx-auto my-8 p-8 sm:p-12 text-center rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md space-y-6 shadow-xl shadow-teal-500/5">
+    <div className="w-full max-w-2xl mx-auto my-8 p-8 sm:p-12 text-center rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 space-y-6 shadow-xl shadow-teal-500/5">
       {/* Icon Badge */}
       <div className="w-16 h-16 rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400 mx-auto flex items-center justify-center border border-teal-500/20 shadow-inner">
         <BrainCircuit className="w-8 h-8 stroke-[1.5]" />
@@ -44,7 +44,7 @@ export const QuizEmptyState: React.FC<QuizEmptyStateProps> = ({
           <button
             onClick={onGenerate}
             disabled={isLoading}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/30 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-lg shadow-yellow-500/20 transition-transform cursor-pointer active:scale-95 disabled:opacity-50"
           >
             <BrainCircuit className="w-4 h-4 stroke-[2.5]" />
             <span>Generate Quiz</span>
@@ -52,7 +52,7 @@ export const QuizEmptyState: React.FC<QuizEmptyStateProps> = ({
         ) : (
           <Link
             href="/upload"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-lg shadow-yellow-500/20 hover:shadow-yellow-500/30 transition-all cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-lg shadow-yellow-500/20 transition-colors cursor-pointer"
           >
             <Upload className="w-4 h-4 stroke-[2.5]" />
             <span>Upload Notes First</span>

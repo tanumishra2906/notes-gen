@@ -29,7 +29,7 @@ export default function NotesPage() {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href="/upload"
-            className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 transition-all"
+            className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-lg shadow-yellow-500/25 transition-colors"
           >
             <Upload className="w-4 h-4 stroke-[2.5]" />
             <span>Upload new PDF</span>
@@ -59,7 +59,7 @@ export default function NotesPage() {
       {studyData ? (
         <DashboardTabs data={studyData} onReset={handleReset} />
       ) : (
-        <div className="max-w-2xl mx-auto my-12 p-8 sm:p-12 text-center rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md space-y-6">
+        <div className="max-w-2xl mx-auto my-12 p-8 sm:p-12 text-center rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 space-y-6">
           <div className="w-16 h-16 rounded-2xl bg-purple-500/10 text-purple-500 mx-auto flex items-center justify-center border border-purple-500/20 shadow-inner">
             <FileText className="w-8 h-8 stroke-[1.5]" />
           </div>

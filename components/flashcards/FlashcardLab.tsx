@@ -7,6 +7,8 @@ import { FlashcardControls } from './FlashcardControls';
 import { FlashcardProgress } from './FlashcardProgress';
 import { Layers, RotateCcw } from 'lucide-react';
 import { PageDoodles } from '@/components/shared/PageDoodles';
+import { ConfettiBurst } from '@/components/shared/ConfettiBurst';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 interface FlashcardLabProps {
   initialCards: FlashcardType[];
@@ -24,13 +26,13 @@ export const FlashcardLab: React.FC<FlashcardLabProps> = ({
   const [isFlipped, setIsFlipped] = useState<boolean>(false);
   const [masteredIds, setMasteredIds] = useState<Set<string>>(new Set());
   const [cardDifficulties, setCardDifficulties] = useState<Record<string, FlashcardDifficulty>>({});
+  const [transitionDirection, setTransitionDirection] = useState<'next' | 'previous'>('next');
+  const [showConfetti, setShowConfetti] = useState(false);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
-  // Sync cards when initialCards changes
-  useEffect(() => {
-    setCards(initialCards);
-    setCurrentIndex(0);
-    setIsFlipped(false);
-  }, [initialCards]);
+  const handleConfettiComplete = useCallback(() => {
+    setShowConfetti(false);
+  }, []);
 
   const currentCard = cards[currentIndex] || cards[0];
 
@@ -40,6 +42,7 @@ export const FlashcardLab: React.FC<FlashcardLabProps> = ({
 
   const handleNext = useCallback(() => {
     if (currentIndex < cards.length - 1) {
+      setTransitionDirection('next');
       setCurrentIndex((prev) => prev + 1);
       setIsFlipped(false);
     }
@@ -47,6 +50,7 @@ export const FlashcardLab: React.FC<FlashcardLabProps> = ({
 
   const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
+      setTransitionDirection('previous');
       setCurrentIndex((prev) => prev - 1);
       setIsFlipped(false);
     }
@@ -54,6 +58,7 @@ export const FlashcardLab: React.FC<FlashcardLabProps> = ({
 
   const handleShuffle = useCallback(() => {
     const shuffled = [...cards].sort(() => Math.random() - 0.5);
+    setTransitionDirection('next');
     setCards(shuffled);
     setCurrentIndex(0);
     setIsFlipped(false);
@@ -67,10 +72,13 @@ export const FlashcardLab: React.FC<FlashcardLabProps> = ({
         next.delete(currentCard.id);
       } else {
         next.add(currentCard.id);
+        if (cards.length > 0 && next.size === cards.length && !prefersReducedMotion) {
+          setShowConfetti(true);
+        }
       }
       return next;
     });
-  }, [currentCard]);
+  }, [cards.length, currentCard, prefersReducedMotion]);
 
   const handleSetDifficulty = useCallback((diff: FlashcardDifficulty) => {
     if (!currentCard) return;
@@ -83,8 +91,14 @@ export const FlashcardLab: React.FC<FlashcardLabProps> = ({
   // Keyboard navigation support
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept keyboard shortcuts if user is typing in an input
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
+      const target = e.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.closest('input, textarea, select, button, a, [contenteditable="true"]') ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
 
       if (e.key === 'ArrowRight') {
         e.preventDefault();
@@ -142,12 +156,23 @@ export const FlashcardLab: React.FC<FlashcardLabProps> = ({
         masteredCount={masteredIds.size}
       />
 
+      {masteredIds.size === cards.length && cards.length > 0 && (
+        <div className="study-page__content flex items-center justify-between gap-3 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-5 py-4 text-sm font-bold text-emerald-700 dark:text-emerald-300" role="status">
+          <span>All cards mastered — you crushed it! {prefersReducedMotion ? '🎉 Take a victory lap!' : '🎉'}</span>
+          {!prefersReducedMotion && showConfetti && (
+            <ConfettiBurst onComplete={handleConfettiComplete} />
+          )}
+        </div>
+      )}
+
       <Flashcard
+        key={`${currentCard.id}-${currentIndex}`}
         card={currentCard}
         isFlipped={isFlipped}
         onFlip={handleFlip}
         isMastered={isCurrentMastered}
         overrideDifficulty={currentDifficulty}
+        transitionDirection={transitionDirection}
       />
 
       <div className="study-page__content">

@@ -97,7 +97,7 @@ export function FileUploader({ onProcessPdf, disabled = false }: FileUploaderPro
               isDragging
                 ? 'border-yellow-400 bg-yellow-400/10 scale-[1.01]'
                 : 'border-slate-300 dark:border-slate-700/80 bg-white/70 dark:bg-slate-900/60 hover:border-yellow-400/70 dark:hover:border-yellow-400/70 hover:bg-yellow-400/5'
-            } backdrop-blur-md shadow-sm group`}
+            } shadow-sm group`}
           >
             <div className="w-20 h-20 mb-6 rounded-3xl bg-yellow-400/10 text-yellow-600 dark:text-yellow-400 flex items-center justify-center group-hover:scale-110 border border-yellow-400/20 transition-transform duration-300">
               <Upload className="w-10 h-10 stroke-[2]" />
@@ -111,7 +111,7 @@ export function FileUploader({ onProcessPdf, disabled = false }: FileUploaderPro
             </p>
           </div>
         ) : (
-          <div className="relative p-5 rounded-2xl border border-yellow-400/50 bg-white/90 dark:bg-slate-900/90 shadow-md backdrop-blur-md flex items-center justify-between gap-4 animate-in fade-in-50 zoom-in-95">
+          <div className="relative p-5 rounded-2xl border border-yellow-400/50 bg-white/90 dark:bg-slate-900/90 shadow-md flex items-center justify-between gap-4 animate-in fade-in-50 zoom-in-95">
             <div className="flex items-center gap-4 min-w-0">
               <div className="w-12 h-12 rounded-xl bg-yellow-400/10 flex items-center justify-center text-yellow-600 dark:text-yellow-400 shrink-0 border border-yellow-400/20">
                 <FileText className="w-6 h-6" />
@@ -149,7 +149,7 @@ export function FileUploader({ onProcessPdf, disabled = false }: FileUploaderPro
           <button
             type="submit"
             disabled={disabled}
-            className="w-full py-4 px-6 rounded-full bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 text-slate-950 font-bold text-base shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 cursor-pointer"
+            className="w-full py-4 px-6 rounded-full bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 text-slate-950 font-bold text-base shadow-lg shadow-yellow-500/25 transition-transform duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 cursor-pointer"
           >
             <Sparkles className="w-5 h-5 stroke-[2.5]" />
             <span>Generate Study Guide</span>

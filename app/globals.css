@@ -147,12 +147,10 @@ body {
 @keyframes reveal-up {
   from {
     transform: translateY(12px);
-    opacity: 0;
   }
 
   to {
     transform: translateY(0);
-    opacity: 1;
   }
 }
 
@@ -171,6 +169,112 @@ body {
 
 .rotate-y-180 {
   transform: rotateY(180deg);
+}
+
+.flashcard-scene {
+  min-height: clamp(23rem, 48svh, 40rem);
+  perspective: 1100px;
+}
+
+.flashcard-flip-trigger {
+  display: block;
+  width: 100%;
+  min-height: inherit;
+  text-align: left;
+  border-radius: 2rem;
+}
+
+.flashcard-inner {
+  position: relative;
+  display: block;
+  min-height: inherit;
+  transform-style: preserve-3d;
+  transition: transform 600ms ease;
+}
+
+.flashcard-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.flashcard-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+  overflow: auto;
+  border: 1px solid var(--card-border);
+  border-radius: 2rem;
+  background: color-mix(in srgb, var(--card-bg) 96%, transparent);
+  box-shadow: 0 20px 70px -48px rgb(0 0 0 / 0.45);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.flashcard-flip-trigger:hover .flashcard-face {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--card-border));
+}
+
+.flashcard-face--back {
+  transform: rotateY(180deg);
+}
+
+.card-swap-next {
+  animation: card-swap-next 300ms ease both;
+}
+
+.card-swap-previous {
+  animation: card-swap-previous 300ms ease both;
+}
+
+@keyframes card-swap-next {
+  from { opacity: 0; transform: translateX(14px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes card-swap-previous {
+  from { opacity: 0; transform: translateX(-14px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.mastered-sparkle {
+  animation: mastered-sparkle 450ms ease both;
+}
+
+@keyframes mastered-sparkle {
+  from { opacity: 0.4; transform: scale(0.65) rotate(-20deg); }
+  to { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+.quiz-option--correct-pop {
+  animation: quiz-correct-pop 420ms ease both;
+  box-shadow: 0 0 0 3px rgb(16 185 129 / 0.18);
+}
+
+@keyframes quiz-correct-pop {
+  0% { opacity: 0.75; transform: scale(0.98); }
+  65% { opacity: 1; transform: scale(1.015); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.quiz-option--shake {
+  animation: quiz-option-shake 360ms ease both;
+}
+
+@keyframes quiz-option-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-3px); }
+}
+
+.quiz-ring-pop {
+  animation: quiz-ring-pop 420ms ease both;
+}
+
+@keyframes quiz-ring-pop {
+  from { opacity: 0.6; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 ::-webkit-scrollbar {
@@ -221,32 +325,23 @@ body {
 }
 
 .toolkit-reveal {
-  opacity: 0;
   transform: translateY(14px);
-  transition: opacity 480ms ease, transform 480ms cubic-bezier(0.2, 0.75, 0.25, 1);
+  transition: transform 480ms cubic-bezier(0.2, 0.75, 0.25, 1);
 }
 
 .toolkit-reveal.is-visible {
-  opacity: 1;
   transform: translateY(0);
 }
 
 .toolkit-card {
   transform: translateY(0);
-  transition: transform 220ms ease, box-shadow 220ms ease;
+  transition: transform 220ms ease;
 }
 
 .toolkit-card:hover,
 .toolkit-card:focus-visible,
 .toolkit-card:focus-within {
   transform: translateY(-5px);
-  box-shadow: 0 18px 40px -24px rgba(64, 42, 14, 0.3);
-}
-
-.dark .toolkit-card:hover,
-.dark .toolkit-card:focus-visible,
-.dark .toolkit-card:focus-within {
-  box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.75);
 }
 
 .toolkit-card__preview {
@@ -309,6 +404,10 @@ body {
   animation: doodle-float 36s ease-in-out infinite alternate;
 }
 
+.page-doodles__item:nth-child(n + 4) {
+  animation: none;
+}
+
 .page-doodles__item svg {
   display: block;
   width: 100%;
@@ -362,7 +461,7 @@ body {
   border: 1px solid var(--card-border);
   background: color-mix(in srgb, var(--surface) 86%, transparent);
   color: var(--foreground);
-  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+  transition: transform 180ms ease;
 }
 
 .quiz-option:not(:disabled):hover {
@@ -394,7 +493,7 @@ body {
 }
 
 .flashcard-answer {
-  transition: opacity 350ms ease, transform 350ms ease;
+  transition: transform 350ms ease;
 }
 
 .flashcard-answer--hidden {
@@ -403,6 +502,21 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .flashcard-inner,
+  .card-swap-next,
+  .card-swap-previous,
+  .mastered-sparkle,
+  .quiz-option--correct-pop,
+  .quiz-option--shake,
+  .quiz-ring-pop {
+    animation: none;
+    transition: none;
+  }
+
+  .flashcard-inner.is-flipped {
+    transform: rotateY(180deg);
+  }
+
   .page-doodles__item,
   .quiz-option,
   .flashcard-answer,

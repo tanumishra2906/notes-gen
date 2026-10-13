@@ -126,7 +126,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-6 rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md space-y-3">
+        <div className="p-6 rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 space-y-3">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Active Document</span>
           <div className="text-xl font-black text-slate-900 dark:text-white">
             {studyData ? '1 PDF Loaded' : 'None'}
@@ -136,7 +136,7 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="p-6 rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md space-y-3">
+        <div className="p-6 rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 space-y-3">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Key Concepts</span>
           <div className="text-xl font-black text-purple-500 dark:text-purple-400">
             {studyData ? `${studyData.keyConcepts.length} Extracted` : '0'}
@@ -144,7 +144,7 @@ export default function DashboardPage() {
           <p className="text-xs text-slate-500">Core study topics identified</p>
         </div>
 
-        <div className="p-6 rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md space-y-3">
+        <div className="p-6 rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 space-y-3">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Definitions & Formulas</span>
           <div className="text-xl font-black text-teal-500 dark:text-teal-400">
             {studyData ? `${studyData.definitions.length + studyData.formulas.length} Available` : '0'}
@@ -153,7 +153,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <section className="p-6 sm:p-8 rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md space-y-5">
+      <section className="p-6 sm:p-8 rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 space-y-5">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -337,7 +337,7 @@ export default function DashboardPage() {
         )}
       </section>
 
-      <div className="p-8 rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md text-center space-y-4">
+      <div className="p-8 rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 text-center space-y-4">
         <h2 className="text-xl font-bold text-slate-900 dark:text-white">Quick Actions</h2>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <Link

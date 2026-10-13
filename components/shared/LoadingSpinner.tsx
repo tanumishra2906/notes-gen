@@ -18,7 +18,7 @@ export function LoadingSpinner({ size = 'md', className, label }: LoadingSpinner
   return (
     <div className="flex flex-col items-center justify-center gap-3">
       <Loader2 className={cn('animate-spin text-indigo-600 dark:text-indigo-400', sizeClasses[size], className)} />
-      {label && <p className="text-sm font-medium text-slate-600 dark:text-slate-300 animate-pulse">{label}</p>}
+      {label && <p className="text-sm font-medium text-slate-600 dark:text-slate-300">{label}</p>}
     </div>
   );
 }

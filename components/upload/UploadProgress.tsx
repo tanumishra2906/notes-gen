@@ -19,7 +19,7 @@ export function UploadProgress({ status }: UploadProgressProps) {
   ];
 
   return (
-    <div className="w-full max-w-md mx-auto p-8 rounded-3xl bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 shadow-2xl backdrop-blur-md text-center animate-in fade-in-50 zoom-in-95">
+    <div className="w-full max-w-md mx-auto p-8 rounded-3xl bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 shadow-2xl text-center animate-in fade-in-50 zoom-in-95">
       <div className="mb-6 flex justify-center">
         <LoadingSpinner size="lg" />
       </div>
@@ -52,7 +52,7 @@ export function UploadProgress({ status }: UploadProgressProps) {
               <div
                 className={`p-2 rounded-xl ${
                   isCurrent
-                    ? 'bg-yellow-400 text-slate-950 animate-pulse'
+                    ? 'bg-yellow-400 text-slate-950'
                     : isCompleted
                     ? 'bg-emerald-600 text-white'
                     : 'bg-slate-200 dark:bg-slate-800 text-slate-400'
@@ -67,7 +67,7 @@ export function UploadProgress({ status }: UploadProgressProps) {
                 <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Done</span>
               )}
               {isCurrent && (
-                <span className="text-xs font-bold text-amber-600 dark:text-yellow-400 animate-pulse">
+                <span className="text-xs font-bold text-amber-600 dark:text-yellow-400">
                   In progress...
                 </span>
               )}

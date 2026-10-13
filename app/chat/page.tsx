@@ -7,7 +7,7 @@ import { MessageSquare, ArrowLeft, Sparkles } from 'lucide-react';
 export default function ChatPage() {
   return (
     <div className="max-w-3xl mx-auto py-12 text-center space-y-8 animate-in fade-in-50 duration-300">
-      <div className="p-8 sm:p-12 rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 backdrop-blur-md space-y-6 shadow-xl shadow-pink-500/5">
+      <div className="p-8 sm:p-12 rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 space-y-6 shadow-xl shadow-pink-500/5">
         <div className="w-16 h-16 rounded-2xl bg-pink-500/10 text-pink-500 dark:text-pink-400 mx-auto flex items-center justify-center border border-pink-500/20">
           <MessageSquare className="w-8 h-8 stroke-[1.5]" />
         </div>

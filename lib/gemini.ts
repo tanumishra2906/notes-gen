@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { StudyContent } from '@/types/study';
 import { Flashcard } from '@/types/flashcards';
 import { QuizQuestion } from '@/types/quiz';
@@ -9,6 +8,7 @@ export async function generateStudyContent(pdfData: string): Promise<StudyConten
     throw new Error('GEMINI_API_KEY environment variable is missing. Please set it in your .env.local file.');
   }
 
+  const { GoogleGenerativeAI, SchemaType } = await import('@google/generative-ai');
   const genAI = new GoogleGenerativeAI(apiKey);
 
   const studyContentSchema: any = {
@@ -168,6 +168,7 @@ export async function generateFlashcards(
     throw new Error('GEMINI_API_KEY environment variable is missing. Please set it in your .env.local file.');
   }
 
+  const { GoogleGenerativeAI, SchemaType } = await import('@google/generative-ai');
   const genAI = new GoogleGenerativeAI(apiKey);
 
   let formattedText = '';
@@ -325,6 +326,7 @@ export async function generateQuiz(
     throw new Error('GEMINI_API_KEY environment variable is missing. Please set it in your .env.local file.');
   }
 
+  const { GoogleGenerativeAI, SchemaType } = await import('@google/generative-ai');
   const genAI = new GoogleGenerativeAI(apiKey);
 
   let formattedText = '';

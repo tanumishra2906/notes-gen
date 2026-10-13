@@ -20,21 +20,11 @@ export const QuizLab: React.FC<QuizLabProps> = ({
   onRegenerate,
   isRegenerating = false,
 }) => {
-  const [questions, setQuestions] = useState<QuizQuestionType[]>(initialQuestions);
+  const questions = initialQuestions;
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
   const [submittedQuestions, setSubmittedQuestions] = useState<Set<string>>(new Set());
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
-
-  // Sync questions when props update
-  useEffect(() => {
-    setQuestions(initialQuestions);
-    setCurrentIndex(0);
-    setUserAnswers({});
-    setSubmittedQuestions(new Set());
-    setIsCompleted(false);
-  }, [initialQuestions]);
-
   const currentQuestion = questions[currentIndex] || questions[0];
   const isCurrentSubmitted = currentQuestion ? submittedQuestions.has(currentQuestion.id) : false;
   const currentSelectedOption = currentQuestion ? userAnswers[currentQuestion.id] : undefined;
@@ -55,13 +45,21 @@ export const QuizLab: React.FC<QuizLabProps> = ({
     }
   });
 
-  const handleSelectOption = (optionIndex: number) => {
+  let currentStreak = 0;
+  for (let index = 0; index <= currentIndex; index += 1) {
+    const question = questions[index];
+    if (!question || !submittedQuestions.has(question.id)) break;
+    currentStreak =
+      userAnswers[question.id] === question.correctAnswer ? currentStreak + 1 : 0;
+  }
+
+  const handleSelectOption = useCallback((optionIndex: number) => {
     if (isCurrentSubmitted || !currentQuestion) return;
     setUserAnswers((prev) => ({
       ...prev,
       [currentQuestion.id]: optionIndex,
     }));
-  };
+  }, [currentQuestion, isCurrentSubmitted]);
 
   const handleSubmitAnswer = useCallback(() => {
     if (!currentQuestion || currentSelectedOption === undefined || isCurrentSubmitted) return;
@@ -117,6 +115,7 @@ export const QuizLab: React.FC<QuizLabProps> = ({
     currentQuestion,
     isCurrentSubmitted,
     currentSelectedOption,
+    handleSelectOption,
     handleSubmitAnswer,
     handleNextQuestion,
   ]);
@@ -167,8 +166,15 @@ export const QuizLab: React.FC<QuizLabProps> = ({
         <section className="flex min-h-[min(68svh,48rem)] flex-col rounded-[2rem] border border-card-border bg-card p-5 shadow-xl shadow-black/5 sm:p-8 xl:p-10">
           <div className="mb-7 space-y-3">
             <div className="flex items-center justify-between text-sm font-bold text-muted">
-              <span>Question progress</span>
-              <span className="text-foreground">{currentIndex + 1} / {questions.length}</span>
+              <span>Question progress 🎯</span>
+              <span className="flex items-center gap-3 text-foreground">
+                {currentStreak > 0 && (
+                  <span className="rounded-full bg-orange-500/10 px-2.5 py-1 text-xs font-bold text-orange-700 dark:text-orange-300">
+                    {currentStreak} in a row 🔥
+                  </span>
+                )}
+                <span>{currentIndex + 1} / {questions.length}</span>
+              </span>
             </div>
             <div
               className="h-2.5 overflow-hidden rounded-full bg-card-border"
@@ -179,7 +185,7 @@ export const QuizLab: React.FC<QuizLabProps> = ({
               aria-valuemax={questions.length}
             >
               <div
-                className="h-full rounded-full bg-accent transition-[width] duration-500"
+                className="h-full rounded-full bg-accent"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>

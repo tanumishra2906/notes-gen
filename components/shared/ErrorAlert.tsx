@@ -8,7 +8,7 @@ interface ErrorAlertProps {
 
 export function ErrorAlert({ message, onRetry }: ErrorAlertProps) {
   return (
-    <div className="w-full rounded-2xl border border-red-200 dark:border-red-900/50 bg-red-50/90 dark:bg-red-950/40 p-5 shadow-sm backdrop-blur-sm transition-all animate-in fade-in-50 slide-in-from-bottom-2">
+    <div className="w-full rounded-2xl border border-red-200 dark:border-red-900/50 bg-red-50/90 dark:bg-red-950/40 p-5 shadow-sm transition-all animate-in fade-in-50 slide-in-from-bottom-2">
       <div className="flex items-start gap-4">
         <div className="rounded-full bg-red-100 dark:bg-red-900/50 p-2 text-red-600 dark:text-red-400 shrink-0">
           <AlertCircle className="w-5 h-5" />

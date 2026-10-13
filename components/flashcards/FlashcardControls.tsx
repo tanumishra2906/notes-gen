@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { FlashcardDifficulty } from '@/types/flashcards';
 import {
   ChevronLeft,
@@ -11,6 +11,7 @@ import {
   Smile,
   Meh,
   Frown,
+  Sparkles,
 } from 'lucide-react';
 
 interface FlashcardControlsProps {
@@ -40,8 +41,13 @@ export const FlashcardControls: React.FC<FlashcardControlsProps> = ({
   currentDifficulty,
   onSetDifficulty,
 }) => {
+  const [masteredPulse, setMasteredPulse] = useState(0);
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === totalCards - 1;
+  const handleMasteredClick = () => {
+    setMasteredPulse((pulse) => pulse + 1);
+    onToggleMastered();
+  };
 
   return (
     <div className="w-full space-y-4">
@@ -101,14 +107,18 @@ export const FlashcardControls: React.FC<FlashcardControlsProps> = ({
           </button>
 
           <button
-            onClick={onToggleMastered}
+            onClick={handleMasteredClick}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
               isMastered
                 ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
                 : 'text-muted hover:bg-surface-raised border border-transparent hover:border-card-border'
             }`}
           >
-            <CheckCircle2 className="w-3.5 h-3.5" />
+            {isMastered ? (
+              <CheckCircle2 key={`mastered-${masteredPulse}`} className="mastered-sparkle w-3.5 h-3.5" />
+            ) : (
+              <Sparkles key={`unmastered-${masteredPulse}`} className="mastered-sparkle w-3.5 h-3.5" />
+            )}
             <span>{isMastered ? 'Mastered' : 'Mark Mastered'}</span>
           </button>
         </div>

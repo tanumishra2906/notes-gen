@@ -38,7 +38,7 @@ export const FlashcardProgress: React.FC<FlashcardProgressProps> = ({
         aria-valuemax={totalCards}
       >
         <div
-          className="h-full rounded-full bg-accent transition-[width] duration-500"
+          className="h-full rounded-full bg-accent"
           style={{ width: `${progressPercent}%` }}
         />
       </div>

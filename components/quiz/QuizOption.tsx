@@ -32,10 +32,12 @@ export const QuizOption: React.FC<QuizOptionProps> = ({
     }
   } else {
     if (isCorrectAnswer) {
-      containerStyles = 'quiz-option--correct font-bold';
+      containerStyles = `quiz-option--correct font-bold ${
+        isUserSelection ? 'quiz-option--correct-pop' : ''
+      }`;
       badgeStyles = 'border-emerald-500 bg-emerald-500 text-white font-extrabold';
     } else if (isUserSelection && !isCorrectAnswer) {
-      containerStyles = 'quiz-option--wrong font-bold';
+      containerStyles = 'quiz-option--wrong quiz-option--shake font-bold';
       badgeStyles = 'border-rose-500 bg-rose-500 text-white font-extrabold';
     } else {
       containerStyles = 'opacity-60 cursor-not-allowed';
