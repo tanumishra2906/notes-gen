@@ -9,7 +9,7 @@ import { KeyConceptsList } from './KeyConceptsList';
 import { DefinitionsList } from './DefinitionsList';
 import { FactsList } from './FactsList';
 import { FormulasList } from './FormulasList';
-import { BookOpen, Lightbulb, Type, ListChecks, Binary, ArrowLeft, Download, Layers, Sparkles, BrainCircuit } from 'lucide-react';
+import { BookOpen, Lightbulb, Type, ListChecks, Binary, ArrowLeft, Download, Layers, Sparkles, BrainCircuit, LoaderCircle } from 'lucide-react';
 import { downloadStudyNotesPdf } from '@/utils/exportNotesPdf';
 
 interface DashboardTabsProps {
@@ -30,6 +30,8 @@ export function DashboardTabs({ data, onReset }: DashboardTabsProps) {
   const [activeTab, setActiveTab] = useState<'summary' | 'concepts' | 'definitions' | 'facts' | 'formulas'>('summary');
   const [isGeneratingFlashcards, setIsGeneratingFlashcards] = useState(false);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [pdfDownloadError, setPdfDownloadError] = useState<string | null>(null);
   const documentTitle = savedDocuments.find((document) => document.id === documentId)?.title;
 
   const handleCreateFlashcards = async () => {
@@ -52,6 +54,19 @@ export function DashboardTabs({ data, onReset }: DashboardTabsProps) {
     await handleGenerateQuiz();
     setIsGeneratingQuiz(false);
     router.push('/quiz');
+  };
+
+  const handleDownloadPdf = async () => {
+    setIsDownloadingPdf(true);
+    setPdfDownloadError(null);
+
+    try {
+      await downloadStudyNotesPdf(data, documentTitle);
+    } catch {
+      setPdfDownloadError('Could not download this PDF. Please try again.');
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
 
   const tabs = [
@@ -105,13 +120,25 @@ export function DashboardTabs({ data, onReset }: DashboardTabsProps) {
             </span>
           </button>
 
-          <button
-            onClick={() => downloadStudyNotesPdf(data, documentTitle)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
-          >
-            <Download className="w-4 h-4 stroke-[2.5]" />
-            <span>Download PDF</span>
-          </button>
+          <div className="flex flex-col items-center">
+            <button
+              onClick={() => void handleDownloadPdf()}
+              disabled={isDownloadingPdf}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer disabled:cursor-wait disabled:opacity-50"
+            >
+              {isDownloadingPdf ? (
+                <LoaderCircle className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 stroke-[2.5]" />
+              )}
+              <span>{isDownloadingPdf ? 'Preparing PDF...' : 'Download PDF'}</span>
+            </button>
+            {pdfDownloadError && (
+              <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {pdfDownloadError}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 

@@ -9,7 +9,7 @@ import { useStudy } from '@/context/StudyContext';
 
 export function AuthButton() {
   const router = useRouter();
-  const { isAuthenticated } = useStudy();
+  const { isAuthenticated, authLoaded } = useStudy();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -33,6 +33,14 @@ export function AuthButton() {
       setIsLoggingOut(false);
     }
   };
+
+  if (!authLoaded) {
+    return (
+      <div className="flex flex-col items-end gap-1" aria-hidden="true">
+        <div className="h-8 w-[168px] rounded-full bg-slate-200 dark:bg-slate-800 sm:h-9" />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
