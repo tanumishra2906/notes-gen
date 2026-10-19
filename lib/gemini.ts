@@ -2,6 +2,51 @@ import { StudyContent } from '@/types/study';
 import { Flashcard } from '@/types/flashcards';
 import { QuizQuestion } from '@/types/quiz';
 
+interface GeneratedQuizQuestion {
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+  topic?: unknown;
+  difficulty?: unknown;
+}
+
+function isGeneratedQuizQuestion(value: unknown): value is GeneratedQuizQuestion {
+  if (typeof value !== 'object' || value === null) return false;
+  if (
+    !('question' in value) ||
+    !('options' in value) ||
+    !('correctAnswer' in value) ||
+    !('explanation' in value)
+  ) return false;
+
+  const { question, options, correctAnswer, explanation } = value;
+  if (
+    typeof question !== 'string' ||
+    !question.trim() ||
+    !Array.isArray(options) ||
+    options.length !== 4 ||
+    typeof correctAnswer !== 'number' ||
+    !Number.isInteger(correctAnswer) ||
+    correctAnswer < 0 ||
+    correctAnswer >= options.length ||
+    typeof explanation !== 'string' ||
+    !explanation.trim()
+  ) return false;
+
+  const normalizedOptions: string[] = [];
+  for (const option of options) {
+    if (typeof option !== 'string' || !option.trim()) return false;
+    normalizedOptions.push(option.trim().toLowerCase());
+  }
+
+  return new Set(normalizedOptions).size === 4;
+}
+
+function isQuizDifficulty(value: string): value is 'easy' | 'medium' | 'hard' {
+  return value === 'easy' || value === 'medium' || value === 'hard';
+}
+
 export async function generateStudyContent(pdfData: string): Promise<StudyContent> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -319,7 +364,8 @@ Return strictly JSON matching the required schema.`;
 }
 
 export async function generateQuiz(
-  sourceContent: StudyContent | string
+  sourceContent: StudyContent | string,
+  count = 10
 ): Promise<QuizQuestion[]> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -351,12 +397,12 @@ ${sourceContent.formulas?.map((f) => `- ${f.name}: ${f.formula} (${f.description
 `.trim();
   }
 
-  const quizSchema: any = {
+  const quizSchema = {
     type: SchemaType.OBJECT,
     properties: {
       questions: {
         type: SchemaType.ARRAY,
-        description: 'A list of multiple choice quiz questions derived from the study material.',
+        description: `A list of ${count} multiple choice quiz questions derived from the study material.`,
         items: {
           type: SchemaType.OBJECT,
           properties: {
@@ -391,7 +437,7 @@ ${sourceContent.formulas?.map((f) => `- ${f.name}: ${f.formula} (${f.description
       },
     },
     required: ['questions'],
-  };
+  } satisfies import('@google/generative-ai').Schema;
 
   const candidateModels = [
     'gemini-3.6-flash',
@@ -402,8 +448,8 @@ ${sourceContent.formulas?.map((f) => `- ${f.name}: ${f.formula} (${f.description
   ];
 
   const prompt = `You are an expert AI Study Assistant specializing in creating educational multiple-choice quizzes.
-Analyze the following study material carefully and generate 5-10 multiple-choice questions.
-Do NOT invent information or draw from outside knowledge.
+Analyze the following study material carefully and generate exactly ${count} multiple-choice questions.
+Use ONLY information explicitly present in the study notes. Do not infer or add outside knowledge.
 
 Study Material:
 """
@@ -411,17 +457,19 @@ ${formattedText}
 """
 
 Guidelines for Quiz Questions:
-1. Base every question STRICTLY on the facts, concepts, definitions, and formulas provided above.
-2. Provide exactly 4 plausible option choices for every question.
-3. Set "correctAnswer" to a 0-based integer index (0, 1, 2, or 3) matching the correct choice in the options array.
-4. Ensure distractor options are realistic and relevant.
-5. Provide a concise, clear explanation for the correct answer.
-6. Assign a category/topic name and difficulty rating ("easy", "medium", or "hard").
-7. Ensure questions test understanding and key facts, avoiding duplicate questions.
+1. Cover the whole document evenly, not just its beginning, and do not create duplicate or near-duplicate questions.
+2. Mix easy, medium, and hard questions.
+3. Provide exactly 4 distinct option strings per question, with exactly one correct answer.
+4. Set "correctAnswer" to a 0-based integer index (0, 1, 2, or 3) for the correct option. Distribute correct-answer positions evenly across A, B, C, and D; do not favour a position.
+5. Make distractors plausible while ensuring only one choice is correct according to the notes.
+6. Include a short explanation for every answer.
+7. Use the same language as the study notes.
+8. Include a topic label for each question when possible.
 
 Return strictly JSON matching the required schema.`;
 
-  let lastError: any = null;
+  let lastError: unknown = null;
+  let receivedQuizResponse = false;
 
   for (const modelName of candidateModels) {
     try {
@@ -430,6 +478,7 @@ Return strictly JSON matching the required schema.`;
         generationConfig: {
           responseMimeType: 'application/json',
           responseSchema: quizSchema,
+          maxOutputTokens: 8192,
         },
       });
 
@@ -437,40 +486,61 @@ Return strictly JSON matching the required schema.`;
       const responseText = result.response.text();
 
       const cleanedText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      const parsedData = JSON.parse(cleanedText);
+      const parsedData: unknown = JSON.parse(cleanedText);
+      receivedQuizResponse = true;
 
-      const rawQuestions = Array.isArray(parsedData.questions) ? parsedData.questions : [];
+      const rawQuestions =
+        typeof parsedData === 'object' &&
+        parsedData !== null &&
+        'questions' in parsedData &&
+        Array.isArray(parsedData.questions)
+          ? parsedData.questions
+          : [];
 
-      const questions: QuizQuestion[] = rawQuestions
-        .filter((q: any) => q && typeof q.question === 'string' && Array.isArray(q.options) && q.options.length >= 2)
-        .map((q: any, idx: number) => {
-          const validOptions = q.options.map((opt: any) => String(opt).trim());
-          let correctIdx = typeof q.correctAnswer === 'number' ? Math.floor(q.correctAnswer) : 0;
-          if (correctIdx < 0 || correctIdx >= validOptions.length) {
-            correctIdx = 0;
-          }
+      const questions: QuizQuestion[] = [];
+      const seenQuestions = new Set<string>();
 
-          return {
-            id: `quiz-q-${Date.now()}-${idx + 1}`,
-            question: q.question.trim(),
-            options: validOptions,
-            correctAnswer: correctIdx,
-            explanation: q.explanation ? String(q.explanation).trim() : 'Correct based on study material.',
-            topic: q.topic || 'General',
-            difficulty: ['easy', 'medium', 'hard'].includes(q.difficulty?.toLowerCase())
-              ? (q.difficulty.toLowerCase() as 'easy' | 'medium' | 'hard')
-              : 'medium',
-          };
+      for (const rawQuestion of rawQuestions) {
+        if (!isGeneratedQuizQuestion(rawQuestion)) continue;
+
+        const questionText = rawQuestion.question.trim();
+        const dedupeKey = questionText.toLowerCase().replace(/\s+/g, ' ');
+        if (seenQuestions.has(dedupeKey)) continue;
+        seenQuestions.add(dedupeKey);
+
+        const topic =
+          typeof rawQuestion.topic === 'string' && rawQuestion.topic.trim()
+            ? rawQuestion.topic.trim()
+            : undefined;
+        const normalizedDifficulty =
+          typeof rawQuestion.difficulty === 'string'
+            ? rawQuestion.difficulty.toLowerCase()
+            : '';
+        const difficulty = isQuizDifficulty(normalizedDifficulty)
+          ? normalizedDifficulty
+          : undefined;
+
+        questions.push({
+          id: `quiz-q-${Date.now()}-${questions.length + 1}`,
+          question: questionText,
+          options: rawQuestion.options.map((option: string) => option.trim()),
+          correctAnswer: rawQuestion.correctAnswer,
+          explanation: rawQuestion.explanation.trim(),
+          ...(topic ? { topic } : {}),
+          ...(difficulty ? { difficulty } : {}),
         });
+        if (questions.length === count) break;
+      }
 
       if (questions.length === 0) {
-        throw new Error('No valid quiz questions generated from text.');
+        lastError = new Error('No valid quiz questions generated from the study notes.');
+        continue;
       }
 
       return questions;
-    } catch (error: any) {
+    } catch (error: unknown) {
       lastError = error;
-      const errorMsg = error.message || '';
+      const errorMsg = error instanceof Error ? error.message : '';
       if (
         errorMsg.includes('404') ||
         errorMsg.includes('not found') ||
@@ -480,20 +550,28 @@ Return strictly JSON matching the required schema.`;
         console.warn(`Gemini model '${modelName}' returned transient error (${errorMsg.substring(0, 80)}...). Retrying fallback model...`);
         continue;
       }
-      if (error.status === 429 || errorMsg.includes('429') || errorMsg.toLowerCase().includes('quota')) {
+      const status =
+        typeof error === 'object' && error !== null && 'status' in error
+          ? error.status
+          : undefined;
+      if (status === 429 || errorMsg.includes('429') || errorMsg.toLowerCase().includes('quota')) {
         throw new Error('429');
       }
       console.warn(`Gemini model '${modelName}' failed for quiz: ${errorMsg.substring(0, 100)}`);
     }
   }
 
+  if (receivedQuizResponse) {
+    throw new Error('No valid quiz questions generated from the study notes.');
+  }
+
   console.error('All Gemini models failed for quiz:', lastError);
-  const finalMsg = lastError?.message || '';
+  const finalMsg = lastError instanceof Error ? lastError.message : '';
   if (finalMsg.includes('503') || finalMsg.includes('high demand')) {
     throw new Error('503');
   }
   if (finalMsg.includes('429') || finalMsg.toLowerCase().includes('quota')) {
     throw new Error('429');
   }
-  throw new Error(`Failed to generate quiz: ${lastError?.message || 'Invalid AI response'}`);
+  throw new Error(`Failed to generate quiz: ${finalMsg || 'Invalid AI response'}`);
 }

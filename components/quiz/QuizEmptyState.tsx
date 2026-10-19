@@ -16,47 +16,44 @@ export const QuizEmptyState: React.FC<QuizEmptyStateProps> = ({
   isLoading = false,
 }) => {
   return (
-    <div className="w-full max-w-2xl mx-auto my-8 p-8 sm:p-12 text-center rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 space-y-6 shadow-xl shadow-teal-500/5">
-      {/* Icon Badge */}
-      <div className="w-16 h-16 rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400 mx-auto flex items-center justify-center border border-teal-500/20 shadow-inner">
-        <BrainCircuit className="w-8 h-8 stroke-[1.5]" />
+    <div className="mx-auto my-8 w-full max-w-2xl space-y-6 rounded-2xl border border-card-border bg-surface p-8 text-center sm:p-12">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-accent/20 bg-accent/10 text-accent-strong">
+        <BrainCircuit aria-hidden="true" className="h-8 w-8 stroke-[1.5]" />
       </div>
 
-      {/* Main Copy */}
       <div className="space-y-2">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
-          <Sparkles className="w-3.5 h-3.5" />
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-bold text-accent-strong">
+          <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />
           <span>Interactive Quiz Mode</span>
         </span>
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+        <h2 className="text-2xl font-extrabold text-foreground sm:text-3xl">
           {hasNotes ? 'Ready to test yourself?' : 'Your quiz will appear here.'}
         </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+        <p className="mx-auto max-w-md text-sm leading-relaxed text-muted">
           {hasNotes
             ? 'Generate an interactive multiple-choice quiz based directly on your uploaded study materials.'
-            : 'Upload your lecture slides or textbook PDF first to automatically generate custom quizzes.'}
+            : 'Upload a PDF to generate a quiz from your study materials.'}
         </p>
       </div>
 
-      {/* Action Buttons */}
-      <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+      <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row">
         {hasNotes ? (
           <button
             onClick={onGenerate}
             disabled={isLoading}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-lg shadow-yellow-500/20 transition-transform cursor-pointer active:scale-95 disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-2.5 rounded-xl bg-accent px-8 py-3.5 text-sm font-bold text-zinc-950 transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-strong disabled:opacity-50 sm:w-auto"
           >
-            <BrainCircuit className="w-4 h-4 stroke-[2.5]" />
+            <BrainCircuit aria-hidden="true" className="h-4 w-4 stroke-[2.5]" />
             <span>Generate Quiz</span>
           </button>
         ) : (
           <Link
             href="/upload"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-lg shadow-yellow-500/20 transition-colors cursor-pointer"
+            className="inline-flex w-full items-center justify-center gap-2.5 rounded-xl bg-accent px-8 py-3.5 text-sm font-bold text-zinc-950 transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-strong sm:w-auto"
           >
-            <Upload className="w-4 h-4 stroke-[2.5]" />
+            <Upload aria-hidden="true" className="h-4 w-4 stroke-[2.5]" />
             <span>Upload Notes First</span>
-            <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+            <ArrowRight aria-hidden="true" className="h-4 w-4 stroke-[2.5]" />
           </Link>
         )}
       </div>

@@ -1,15 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { QuizQuestion as QuizQuestionType } from '@/types/quiz';
-import { Trophy, CheckCircle2, XCircle, RotateCcw, Sparkles, BookOpen } from 'lucide-react';
-import { ConfettiBurst } from '@/components/shared/ConfettiBurst';
+import { CheckCircle2, ChevronDown, RotateCcw, Sparkles, Trophy, XCircle } from 'lucide-react';
+import { Confetti } from '@/components/shared/Confetti';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useAnimatedNumber } from '@/hooks/useAnimatedNumber';
 
 interface QuizResultsProps {
   questions: QuizQuestionType[];
   userAnswers: Record<string, number>;
+  documentTitle?: string;
   onRetry: () => void;
   onGenerateNew: () => void;
   isGeneratingNew?: boolean;
@@ -18,174 +19,178 @@ interface QuizResultsProps {
 export const QuizResults: React.FC<QuizResultsProps> = ({
   questions,
   userAnswers,
+  documentTitle,
   onRetry,
   onGenerateNew,
   isGeneratingNew = false,
 }) => {
+  const [reviewOpen, setReviewOpen] = useState(false);
   const totalQuestions = questions.length;
-  let correctCount = 0;
-  const incorrectQuestions: { question: QuizQuestionType; chosenOption: number }[] = [];
-
-  questions.forEach((q) => {
-    const selected = userAnswers[q.id];
-    if (selected === q.correctAnswer) {
-      correctCount += 1;
-    } else {
-      incorrectQuestions.push({
-        question: q,
-        chosenOption: selected !== undefined ? selected : -1,
-      });
-    }
-  });
-
-  const accuracy = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+  const correctCount = questions.reduce(
+    (count, question) =>
+      count + (userAnswers[question.id] === question.correctAnswer ? 1 : 0),
+    0
+  );
+  const accuracy =
+    totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
   const prefersReducedMotion = usePrefersReducedMotion();
   const animatedCorrectCount = useAnimatedNumber(correctCount, {
-    duration: 900,
-    reducedMotion: prefersReducedMotion,
-  });
-  const animatedAccuracy = useAnimatedNumber(accuracy, {
-    duration: 900,
+    duration: 800,
     reducedMotion: prefersReducedMotion,
   });
 
-  const getScoreMessage = () => {
-    if (accuracy >= 90) return 'Mastery unlocked! You absolutely crushed it! 🎉';
-    if (accuracy >= 70) return 'Great work! Your study skills are shining. 🌟';
-    if (accuracy >= 50) return 'Nice effort! A little review will make these ideas stick. 💡';
-    return 'Every try makes you stronger. Review your notes and give it another go! 📚';
-  };
+  const scoreMessage =
+    accuracy >= 80
+      ? 'Excellent work. You have a strong grasp of this material.'
+      : accuracy >= 60
+        ? 'Nice work. You are building a solid understanding.'
+        : 'Keep going. Reviewing these answers is a great next step.';
 
   return (
-    <div className="relative w-full max-w-3xl mx-auto space-y-8 animate-in fade-in-50 duration-500">
-      {accuracy >= 60 && !prefersReducedMotion && (
-        <ConfettiBurst />
+    <div className="mx-auto w-full max-w-4xl space-y-6 py-6 sm:py-8">
+      {!prefersReducedMotion && accuracy >= 60 && (
+        <Confetti burst={accuracy === 100 ? 'large' : 'standard'} />
       )}
-      {accuracy >= 60 && prefersReducedMotion && (
-        <p role="status" className="text-center font-bold text-emerald-700 dark:text-emerald-300">
-          Brilliant work — you earned a celebration! 🎉
+      <section className="relative z-10 rounded-2xl border border-card-border bg-surface p-6 text-center sm:p-10">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/15 text-accent-strong">
+          <Trophy aria-hidden="true" className="h-7 w-7" />
+        </div>
+        <p className="mt-4 text-xs font-bold uppercase tracking-wider text-accent-strong">
+          Quiz complete
         </p>
-      )}
-      {/* Header Result Banner */}
-      <div className="p-8 sm:p-10 rounded-3xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800/80 text-center space-y-6 shadow-xl shadow-yellow-500/5">
-        <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-yellow-500 via-amber-400 to-yellow-300 text-slate-950 mx-auto flex items-center justify-center shadow-lg shadow-yellow-500/20">
-          <Trophy className="w-10 h-10 stroke-[2]" />
-        </div>
+        <h1 className="quiz-results-heading mt-2 break-words text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl">
+          {documentTitle || 'Your results'}
+        </h1>
+        <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-muted">
+          {scoreMessage}
+        </p>
 
-        <div className="space-y-2">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold bg-yellow-400/10 text-amber-700 dark:text-yellow-400 border border-yellow-400/20">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Quiz Complete</span>
+        <div className="mx-auto mt-7 flex max-w-sm flex-col items-center rounded-2xl border border-card-border bg-surface-raised p-5">
+          <span className="text-4xl font-extrabold tracking-tight text-foreground">
+            {animatedCorrectCount} of {totalQuestions}
           </span>
-          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-            Your Results ✨
-          </h1>
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium max-w-md mx-auto">
-            {getScoreMessage()}
-          </p>
+          <span className="mt-1 text-xs font-bold uppercase tracking-wider text-muted">
+            Correct
+          </span>
         </div>
 
-        {/* Score Cards Grid */}
-        <div className="grid grid-cols-3 gap-3 sm:gap-4 max-w-md mx-auto pt-2">
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/60 flex flex-col items-center">
-            <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-              {animatedCorrectCount} / {totalQuestions}
-            </span>
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-1">
-              Final Score
-            </span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col items-center">
-            <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
-              <span className="text-2xl sm:text-3xl font-black">{animatedCorrectCount}</span>
-            </div>
-            <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider mt-1">
-              Correct
-            </span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col items-center">
-            <span className="text-2xl sm:text-3xl font-black text-amber-700 dark:text-yellow-400">
-              {animatedAccuracy}%
-            </span>
-            <span className="text-[11px] font-semibold text-amber-800 dark:text-yellow-300 uppercase tracking-wider mt-1">
-              Accuracy
-            </span>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
           <button
+            type="button"
             onClick={onRetry}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-lg shadow-yellow-500/20 transition-transform cursor-pointer active:scale-95"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-strong"
           >
-            <RotateCcw className="w-4 h-4 stroke-[2.5]" />
-            <span>Retry Quiz</span>
+            <RotateCcw aria-hidden="true" className="h-4 w-4" />
+            Retry quiz
           </button>
-
           <button
+            type="button"
             onClick={onGenerateNew}
             disabled={isGeneratingNew}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-bold text-slate-700 dark:text-slate-200 bg-white/70 dark:bg-slate-800/70 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-full transition-all cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-card-border bg-surface px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-strong disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Sparkles className={`w-4 h-4 text-purple-500 ${isGeneratingNew ? 'animate-spin' : ''}`} />
-            <span>Generate New Quiz</span>
+            <Sparkles aria-hidden="true" className="h-4 w-4" />
+            Generate new quiz
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* Review Areas (If any incorrect answers) */}
-      {incorrectQuestions.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-lg">
-            <BookOpen className="w-5 h-5 text-purple-500" />
-            <h3>Areas for Review ({incorrectQuestions.length})</h3>
-          </div>
+      <section className="relative z-10 overflow-hidden rounded-2xl border border-card-border bg-surface">
+        <button
+          type="button"
+          aria-expanded={reviewOpen}
+          aria-controls="quiz-review-list"
+          onClick={() => setReviewOpen((current) => !current)}
+          className="flex w-full items-center justify-between gap-4 p-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-strong sm:p-6"
+        >
+          <span>
+            <span className="block text-base font-bold text-foreground">Review answers</span>
+            <span className="mt-1 block text-xs text-muted">
+              Revisit each question, your answer, and the explanation.
+            </span>
+          </span>
+          <ChevronDown
+            aria-hidden="true"
+            className={`h-5 w-5 shrink-0 text-muted transition-transform ${
+              reviewOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </button>
+        <div
+          id="quiz-review-list"
+          hidden={!reviewOpen}
+          className="space-y-3 border-t border-card-border p-4 sm:p-5"
+        >
+          {questions.map((question, index) => {
+            const chosenOption = userAnswers[question.id];
+            const isCorrect = chosenOption === question.correctAnswer;
 
-          <div className="space-y-4">
-            {incorrectQuestions.map(({ question: q, chosenOption }, idx) => (
-              <div
-                key={q.id || idx}
-                className="p-6 rounded-2xl bg-white/70 dark:bg-slate-900/60 border border-rose-500/20 space-y-3"
+            return (
+              <article
+                key={question.id}
+                className="rounded-xl border border-card-border bg-surface-raised p-4"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20">
-                    Topic: {q.topic || 'General'}
-                  </span>
-                </div>
-
-                <p className="font-bold text-slate-900 dark:text-white text-base">
-                  {q.question}
-                </p>
-
-                <div className="space-y-1.5 text-xs sm:text-sm">
-                  {chosenOption >= 0 && (
-                    <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-medium">
-                      <XCircle className="w-4 h-4 shrink-0" />
-                      <span>
-                        Your answer: <strong>{q.options[chosenOption]}</strong>
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium">
-                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <h3 className="text-sm font-bold leading-relaxed text-foreground">
+                  {index + 1}. {question.question}
+                </h3>
+                <div className="mt-3 space-y-2 text-sm">
+                  <p
+                    className={`flex items-start gap-2 ${
+                      isCorrect
+                        ? 'text-emerald-700 dark:text-emerald-300'
+                        : 'text-rose-700 dark:text-rose-300'
+                    }`}
+                  >
+                    {isCorrect ? (
+                      <CheckCircle2 aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+                    ) : (
+                      <XCircle aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+                    )}
                     <span>
-                      Correct answer: <strong>{q.options[q.correctAnswer]}</strong>
+                      Your answer:{' '}
+                      <strong>
+                        {chosenOption === undefined
+                          ? 'Not answered'
+                          : question.options[chosenOption] || 'Unknown option'}
+                      </strong>
                     </span>
-                  </div>
+                  </p>
+                  <p className="flex items-start gap-2 text-emerald-700 dark:text-emerald-300">
+                    <CheckCircle2 aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      Correct answer:{' '}
+                      <strong>{question.options[question.correctAnswer]}</strong>
+                    </span>
+                  </p>
                 </div>
-
-                <p className="text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/50 dark:border-slate-800/50 leading-relaxed">
-                  💡 <strong>Explanation:</strong> {q.explanation}
+                <p className="mt-3 border-t border-card-border pt-3 text-sm leading-relaxed text-muted">
+                  {question.explanation}
                 </p>
-              </div>
-            ))}
-          </div>
+              </article>
+            );
+          })}
         </div>
-      )}
+      </section>
+      <style jsx>{`
+        .quiz-results-heading {
+          animation: quiz-results-fade-up 400ms ease-out both;
+        }
+        @keyframes quiz-results-fade-up {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .quiz-results-heading {
+            animation: none;
+          }
+        }
+      `}</style>
     </div>
   );
 };

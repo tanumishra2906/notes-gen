@@ -5,39 +5,33 @@ import { Sparkles, BrainCircuit } from 'lucide-react';
 
 export const QuizLoadingState: React.FC = () => {
   return (
-    <div className="w-full max-w-2xl mx-auto my-8 p-8 sm:p-12 text-center rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 space-y-6 shadow-xl shadow-teal-500/5">
-      {/* Animated Icon */}
-      <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
-        <div className="absolute inset-0 rounded-2xl bg-teal-500/20 dark:bg-teal-500/10 opacity-75" />
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-teal-500 to-emerald-400 text-slate-950 flex items-center justify-center shadow-lg shadow-teal-500/20 z-10">
-          <BrainCircuit className="w-8 h-8 stroke-[2]" />
-        </div>
+    <div className="mx-auto my-8 w-full max-w-2xl space-y-6 rounded-2xl border border-card-border bg-surface p-8 text-center sm:p-12">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-accent/20 bg-accent/10 text-accent-strong">
+        <BrainCircuit aria-hidden="true" className="h-8 w-8 stroke-[2]" />
       </div>
 
-      {/* Main Copy */}
       <div className="space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
-          <Sparkles className="w-3.5 h-3.5 animate-spin-slow" />
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-bold text-accent-strong">
+          <Sparkles aria-hidden="true" className="h-3.5 w-3.5" />
           <span>Gemini AI Processing</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+        <h2 className="text-2xl font-extrabold text-foreground sm:text-3xl">
           Creating your quiz...
         </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-          You'll be testing yourself in just a moment. Generating multiple-choice questions from your study materials.
+        <p className="mx-auto max-w-md text-sm leading-relaxed text-muted">
+          You&apos;ll be testing yourself in just a moment. Generating multiple-choice questions from your study materials.
         </p>
       </div>
 
-      {/* Question Options Skeleton */}
-      <div className="w-full space-y-3 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-800/30">
-        <div className="w-3/4 h-5 rounded-full bg-slate-200 dark:bg-slate-700 mx-auto mb-4" />
+      <div className="w-full space-y-3 rounded-2xl border border-card-border bg-surface-raised p-4">
+        <div className="mx-auto mb-4 h-5 w-3/4 rounded-full bg-card-border" />
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="w-full h-12 rounded-xl bg-slate-200/70 dark:bg-slate-800/60 flex items-center px-4"
+            className="flex h-12 w-full items-center rounded-xl border border-card-border bg-surface px-4"
           >
-            <div className="w-6 h-6 rounded-lg bg-slate-300 dark:bg-slate-700 mr-3" />
-            <div className="w-1/2 h-3 rounded-full bg-slate-300 dark:bg-slate-700" />
+            <div className="mr-3 h-6 w-6 rounded-lg bg-card-border" />
+            <div className="h-3 w-1/2 rounded-full bg-card-border" />
           </div>
         ))}
       </div>

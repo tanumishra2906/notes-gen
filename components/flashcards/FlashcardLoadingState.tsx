@@ -5,34 +5,33 @@ import { Sparkles, BrainCircuit } from 'lucide-react';
 
 export const FlashcardLoadingState: React.FC = () => {
   return (
-    <div className="w-full max-w-2xl mx-auto my-8 p-8 sm:p-12 text-center rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 space-y-6 shadow-xl shadow-yellow-500/5">
-      {/* Animated Icon */}
-      <div className="relative w-20 h-20 mx-auto flex items-center justify-center">
-        <div className="absolute inset-0 rounded-2xl bg-yellow-400/20 dark:bg-yellow-400/10 opacity-75" />
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-yellow-500 to-amber-400 text-slate-950 flex items-center justify-center shadow-lg shadow-yellow-500/20 z-10">
-          <BrainCircuit className="w-8 h-8 stroke-[2]" />
-        </div>
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      className="mx-auto my-8 w-full max-w-2xl space-y-6 rounded-2xl border border-card-border bg-surface p-8 text-center sm:p-12"
+    >
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-accent/20 bg-accent/10 text-accent-strong">
+        <BrainCircuit className="w-8 h-8 stroke-[2]" />
       </div>
 
-      {/* Main Copy */}
       <div className="space-y-2">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-yellow-400/10 text-yellow-600 dark:text-yellow-400 border border-yellow-400/20">
-          <Sparkles className="w-3.5 h-3.5 animate-spin-slow" />
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-bold text-foreground">
+          <Sparkles className="w-3.5 h-3.5" />
           <span>Gemini AI Processing</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+        <h2 className="text-2xl font-extrabold text-foreground sm:text-3xl">
           Creating your flashcards...
         </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+        <p className="mx-auto max-w-md text-sm leading-relaxed text-muted">
           Extracting key definitions, concepts, and formulas from your study material into structured flashcards.
         </p>
       </div>
 
-      {/* Card Skeleton Pulse */}
-      <div className="w-full h-48 rounded-2xl border-2 border-dashed border-yellow-400/30 dark:border-yellow-400/20 bg-slate-50/50 dark:bg-slate-800/30 flex flex-col items-center justify-center p-6 space-y-3">
-        <div className="w-3/4 h-4 rounded-full bg-slate-200 dark:bg-slate-700" />
-        <div className="w-1/2 h-4 rounded-full bg-slate-200 dark:bg-slate-700" />
-        <div className="w-1/4 h-3 rounded-full bg-yellow-400/30 mt-2" />
+      <div className="flex h-48 w-full flex-col items-center justify-center space-y-3 rounded-2xl border border-card-border bg-surface-raised p-6">
+        <div className="h-4 w-3/4 rounded-full bg-card-border" />
+        <div className="h-4 w-1/2 rounded-full bg-card-border" />
+        <div className="mt-2 h-3 w-1/4 rounded-full bg-accent/30" />
       </div>
     </div>
   );

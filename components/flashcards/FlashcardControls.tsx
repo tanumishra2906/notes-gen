@@ -1,170 +1,183 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { FlashcardDifficulty } from '@/types/flashcards';
-import {
-  ChevronLeft,
-  ChevronRight,
-  RotateCw,
-  Shuffle,
-  CheckCircle2,
-  Smile,
-  Meh,
-  Frown,
-  Sparkles,
-} from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight, Frown, Meh, Smile } from 'lucide-react';
 
 interface FlashcardControlsProps {
   currentIndex: number;
   totalCards: number;
-  isFlipped: boolean;
-  onFlip: () => void;
+  masteredCount: number;
+  masteredCardIds: Set<string>;
+  cardIds: string[];
+  isMastered: boolean;
+  currentDifficulty: FlashcardDifficulty;
   onPrevious: () => void;
   onNext: () => void;
-  onShuffle: () => void;
-  isMastered: boolean;
+  onJump: (index: number) => void;
+  onGotIt: () => void;
+  onStillLearning: () => void;
   onToggleMastered: () => void;
-  currentDifficulty: FlashcardDifficulty;
-  onSetDifficulty: (diff: FlashcardDifficulty) => void;
+  onSetDifficulty: (difficulty: FlashcardDifficulty) => void;
 }
 
 export const FlashcardControls: React.FC<FlashcardControlsProps> = ({
   currentIndex,
   totalCards,
-  isFlipped,
-  onFlip,
+  masteredCount,
+  masteredCardIds,
+  cardIds,
+  isMastered,
+  currentDifficulty,
   onPrevious,
   onNext,
-  onShuffle,
-  isMastered,
+  onJump,
+  onGotIt,
+  onStillLearning,
   onToggleMastered,
-  currentDifficulty,
   onSetDifficulty,
 }) => {
-  const [masteredPulse, setMasteredPulse] = useState(0);
-  const isFirst = currentIndex === 0;
-  const isLast = currentIndex === totalCards - 1;
-  const handleMasteredClick = () => {
-    setMasteredPulse((pulse) => pulse + 1);
-    onToggleMastered();
-  };
+  const progress = totalCards > 0 ? Math.round((masteredCount / totalCards) * 100) : 0;
 
   return (
-    <div className="w-full space-y-4">
-      {/* Primary Navigation & Action Bar */}
-      <div className="flex items-center justify-between gap-2 rounded-3xl border border-card-border bg-card p-3 shadow-md sm:p-4">
-        {/* Previous Button */}
+    <section aria-label="Flashcard study controls" className="space-y-4 rounded-2xl border border-card-border bg-surface p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <button
+          type="button"
           onClick={onPrevious}
-          disabled={isFirst}
-          className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all ${
-            isFirst
-              ? 'cursor-not-allowed opacity-40 text-muted'
-              : 'cursor-pointer text-foreground hover:bg-surface active:scale-95'
-          }`}
+          disabled={currentIndex <= 0}
           aria-label="Previous card"
+          className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-strong disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
-          <span className="hidden sm:inline">Previous</span>
+          <ChevronLeft aria-hidden="true" className="h-4 w-4" />
+          Prev
         </button>
-
-        {/* Center Flip CTA */}
+        <span className="text-sm font-bold text-foreground">
+          Card {totalCards > 0 ? currentIndex + 1 : 0} / {totalCards} of the filtered deck
+        </span>
         <button
-          onClick={onFlip}
-          className="flex items-center gap-2 rounded-2xl bg-accent px-6 py-3 text-xs font-bold text-zinc-950 shadow-md shadow-amber-900/10 transition-colors duration-200 hover:bg-accent-hover active:scale-95 sm:px-8 sm:text-sm"
-        >
-          <RotateCw className={`w-4 h-4 stroke-[2.5] ${isFlipped ? 'rotate-180' : ''}`} />
-          <span>{isFlipped ? 'Show Question' : 'Flip Card'}</span>
-        </button>
-
-        {/* Next Button */}
-        <button
+          type="button"
           onClick={onNext}
-          disabled={isLast}
-          className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all ${
-            isLast
-              ? 'cursor-not-allowed opacity-40 text-muted'
-              : 'cursor-pointer text-foreground hover:bg-surface active:scale-95'
-          }`}
           aria-label="Next card"
+          className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-strong"
         >
-          <span className="hidden sm:inline">Next</span>
-          <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+          Next
+          <ChevronRight aria-hidden="true" className="h-4 w-4" />
         </button>
       </div>
 
-      {/* Secondary Actions Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-card-border bg-surface/75 px-4 py-3 text-xs">
-        {/* Left: Shuffle & Mastered */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onShuffle}
-            className="flex items-center gap-1.5 rounded-xl border border-transparent px-3 py-1.5 font-bold text-muted transition-all hover:border-card-border hover:bg-surface-raised cursor-pointer"
-            title="Shuffle cards order"
-          >
-            <Shuffle className="w-3.5 h-3.5 text-accent-purple" />
-            <span>Shuffle</span>
-          </button>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={onStillLearning}
+          aria-pressed={!isMastered}
+          className={`rounded-xl border px-4 py-2.5 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-strong ${
+            !isMastered
+              ? 'border-accent/40 bg-accent/10 text-foreground'
+              : 'border-card-border text-muted hover:bg-surface-raised'
+          }`}
+        >
+          Still learning
+        </button>
+        <button
+          type="button"
+          onClick={onGotIt}
+          aria-pressed={isMastered}
+          className="rounded-xl border border-emerald-600/25 bg-emerald-600/10 px-4 py-2.5 text-sm font-bold text-emerald-800 transition-colors hover:bg-emerald-600/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 dark:text-emerald-300"
+        >
+          Got it
+        </button>
+      </div>
 
-          <button
-            onClick={handleMasteredClick}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
-              isMastered
-                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
-                : 'text-muted hover:bg-surface-raised border border-transparent hover:border-card-border'
-            }`}
-          >
-            {isMastered ? (
-              <CheckCircle2 key={`mastered-${masteredPulse}`} className="mastered-sparkle w-3.5 h-3.5" />
-            ) : (
-              <Sparkles key={`unmastered-${masteredPulse}`} className="mastered-sparkle w-3.5 h-3.5" />
-            )}
-            <span>{isMastered ? 'Mastered' : 'Mark Mastered'}</span>
-          </button>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-card-border pt-4">
+        <button
+          type="button"
+          onClick={onToggleMastered}
+          aria-pressed={isMastered}
+          className={`rounded-lg border px-3 py-2 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-strong ${
+            isMastered
+              ? 'border-emerald-600/30 bg-emerald-600/10 text-emerald-800 dark:text-emerald-300'
+              : 'border-card-border text-muted hover:bg-surface-raised'
+          }`}
+        >
+          {isMastered ? 'Mastered' : 'Mark Mastered'}
+        </button>
 
-        {/* Right: Difficulty Selector */}
-        <div className="flex items-center gap-1">
-          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mr-1 hidden sm:inline">
-            Difficulty:
-          </span>
-          <button
-            onClick={() => onSetDifficulty('easy')}
-            className={`flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold transition-all cursor-pointer ${
-              currentDifficulty === 'easy'
-                ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
-                : 'text-slate-500 hover:text-emerald-500 hover:bg-emerald-500/10'
-            }`}
-          >
-            <Smile className="w-3.5 h-3.5" />
-            <span>Easy</span>
-          </button>
-
-          <button
-            onClick={() => onSetDifficulty('medium')}
-            className={`flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold transition-all cursor-pointer ${
-              currentDifficulty === 'medium'
-                ? 'bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30'
-                : 'text-slate-500 hover:text-yellow-500 hover:bg-yellow-500/10'
-            }`}
-          >
-            <Meh className="w-3.5 h-3.5" />
-            <span>Med</span>
-          </button>
-
-          <button
-            onClick={() => onSetDifficulty('hard')}
-            className={`flex items-center gap-1 rounded-lg px-2.5 py-1 font-bold transition-all cursor-pointer ${
-              currentDifficulty === 'hard'
-                ? 'bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30'
-                : 'text-slate-500 hover:text-rose-500 hover:bg-rose-500/10'
-            }`}
-          >
-            <Frown className="w-3.5 h-3.5" />
-            <span>Hard</span>
-          </button>
+        <div className="flex items-center gap-1" role="group" aria-label="Set card difficulty">
+          <span className="mr-1 text-xs font-semibold text-muted">Difficulty</span>
+          {([
+            ['easy', 'Easy', Smile],
+            ['medium', 'Medium', Meh],
+            ['hard', 'Hard', Frown],
+          ] as const).map(([difficulty, label, Icon]) => (
+            <button
+              key={difficulty}
+              type="button"
+              onClick={() => onSetDifficulty(difficulty)}
+              aria-label={`Set difficulty to ${label}`}
+              aria-pressed={currentDifficulty === difficulty}
+              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-2 text-xs font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-strong ${
+                currentDifficulty === difficulty
+                  ? 'border-accent/40 bg-accent/15 text-foreground'
+                  : 'border-transparent text-muted hover:bg-surface-raised'
+              }`}
+            >
+              <Icon aria-hidden="true" className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{label}</span>
+            </button>
+          ))}
         </div>
       </div>
-    </div>
+
+      <div className="space-y-2 border-t border-card-border pt-4">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-semibold text-muted">Deck progress</span>
+          <span className="font-bold text-foreground">
+            {masteredCount} / {totalCards} mastered · {progress}%
+          </span>
+        </div>
+        <div
+          className="h-2 overflow-hidden rounded-full bg-surface-raised"
+          role="progressbar"
+          aria-label="Mastered cards"
+          aria-valuenow={masteredCount}
+          aria-valuemin={0}
+          aria-valuemax={totalCards}
+        >
+          <div
+            className="h-full rounded-full bg-emerald-600 transition-[width] duration-300 motion-reduce:transition-none"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="overflow-x-auto pb-1">
+        <div className="flex min-w-max items-center gap-2" aria-label="Jump to card">
+          {cardIds.map((id, index) => {
+            const isCurrent = index === currentIndex;
+            const isDone = masteredCardIds.has(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onJump(index)}
+                aria-label={`Go to card ${index + 1}${isDone ? ', mastered' : ''}`}
+                aria-current={isCurrent ? 'step' : undefined}
+                className={`inline-flex h-9 min-w-9 items-center justify-center gap-1 rounded-full border px-2.5 text-xs font-bold transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-strong ${
+                  isCurrent
+                    ? 'scale-110 border-accent bg-accent text-zinc-950'
+                    : isDone
+                      ? 'border-emerald-600/30 bg-emerald-600/10 text-emerald-800 dark:text-emerald-300'
+                      : 'border-[#F2E2A0] bg-[#FFF7D1] text-stone-800 hover:scale-105'
+                }`}
+              >
+                {isDone && <Check aria-hidden="true" className="h-3 w-3" />}
+                {index + 1}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 };

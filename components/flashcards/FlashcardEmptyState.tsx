@@ -16,35 +16,32 @@ export const FlashcardEmptyState: React.FC<FlashcardEmptyStateProps> = ({
   isLoading = false,
 }) => {
   return (
-    <div className="w-full max-w-2xl mx-auto my-8 p-8 sm:p-12 text-center rounded-3xl bg-white/70 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 space-y-6 shadow-xl shadow-yellow-500/5">
-      {/* Icon Badge */}
-      <div className="w-16 h-16 rounded-2xl bg-yellow-400/10 text-yellow-600 dark:text-yellow-400 mx-auto flex items-center justify-center border border-yellow-400/20 shadow-inner">
+    <div className="flashcard-empty-enter mx-auto my-8 w-full max-w-2xl space-y-6 rounded-2xl border border-card-border bg-surface p-8 text-center sm:p-12">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-accent/20 bg-accent/10 text-accent-strong">
         <Layers className="w-8 h-8 stroke-[1.5]" />
       </div>
 
-      {/* Main Copy */}
       <div className="space-y-2">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-yellow-400/10 text-yellow-600 dark:text-yellow-400 border border-yellow-400/20">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-bold text-foreground">
           <Sparkles className="w-3.5 h-3.5" />
           <span>Interactive Study Mode</span>
         </span>
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+        <h2 className="text-2xl font-extrabold text-foreground sm:text-3xl">
           Your flashcards will appear here.
         </h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+        <p className="mx-auto max-w-md text-sm leading-relaxed text-muted">
           {hasNotes
-            ? 'Convert your generated study notes into interactive flip cards for fast spaced repetition study.'
-            : 'Upload your lecture slides or textbook PDF first, then turn your notes into smart flashcards.'}
+            ? 'Turn your generated study notes into interactive flashcards for focused review.'
+            : 'Upload a PDF to create notes first, then turn those notes into flashcards.'}
         </p>
       </div>
 
-      {/* Action Buttons */}
       <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
         {hasNotes ? (
           <button
             onClick={onGenerate}
             disabled={isLoading}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-lg shadow-yellow-500/20 transition-transform cursor-pointer active:scale-95 disabled:opacity-50"
+            className="inline-flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl bg-accent px-6 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-strong disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             <Sparkles className="w-4 h-4 stroke-[2.5]" />
             <span>Generate Flashcards</span>
@@ -52,7 +49,7 @@ export const FlashcardEmptyState: React.FC<FlashcardEmptyStateProps> = ({
         ) : (
           <Link
             href="/upload"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 text-sm font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 dark:bg-yellow-400 dark:hover:bg-yellow-300 rounded-full shadow-lg shadow-yellow-500/20 transition-colors cursor-pointer"
+            className="inline-flex w-full items-center justify-center gap-2.5 rounded-xl bg-accent px-6 py-3 text-sm font-bold text-zinc-950 transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-strong sm:w-auto"
           >
             <Upload className="w-4 h-4 stroke-[2.5]" />
             <span>Upload Notes First</span>
@@ -60,6 +57,26 @@ export const FlashcardEmptyState: React.FC<FlashcardEmptyStateProps> = ({
           </Link>
         )}
       </div>
+      <style jsx>{`
+        .flashcard-empty-enter {
+          animation: flashcard-empty-fade-up 400ms ease-out both;
+        }
+        @keyframes flashcard-empty-fade-up {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .flashcard-empty-enter {
+            animation: none;
+          }
+        }
+      `}</style>
     </div>
   );
 };

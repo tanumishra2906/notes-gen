@@ -7,6 +7,7 @@ import type { QuizQuestion } from '@/types/quiz';
 
 interface GenerateQuizRequestBody {
   documentId?: string;
+  count?: number;
 }
 
 export async function POST(request: NextRequest) {
@@ -31,6 +32,19 @@ async function handleGenerateQuiz(
     } catch {
       return NextResponse.json(
         { success: false, error: 'Invalid JSON payload in request.' },
+        { status: 400 }
+      );
+    }
+
+    if (
+      body.count !== undefined &&
+      (typeof body.count !== 'number' ||
+        !Number.isInteger(body.count) ||
+        body.count < 5 ||
+        body.count > 20)
+    ) {
+      return NextResponse.json(
+        { success: false, error: 'count must be an integer between 5 and 20.' },
         { status: 400 }
       );
     }
@@ -73,9 +87,15 @@ async function handleGenerateQuiz(
 
     let questions: QuizQuestion[];
     try {
-      questions = await generateQuiz(document.study_content);
+      questions = await generateQuiz(document.study_content, body.count ?? 10);
     } catch (geminiError: unknown) {
       const errMsg = geminiError instanceof Error ? geminiError.message : '';
+      if (errMsg === 'No valid quiz questions generated from the study notes.') {
+        return NextResponse.json(
+          { success: false, error: 'No valid quiz questions could be generated from these study notes.' },
+          { status: 422 }
+        );
+      }
       if (errMsg === '429' || errMsg.includes('429')) {
         return NextResponse.json(
           {

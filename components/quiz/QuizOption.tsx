@@ -49,7 +49,9 @@ export const QuizOption: React.FC<QuizOptionProps> = ({
     <button
       onClick={onSelect}
       disabled={isSubmitted}
-      className={`quiz-option flex w-full items-center justify-between gap-4 text-left ${isSubmitted ? '' : 'cursor-pointer'} ${containerStyles}`}
+      type="button"
+      aria-pressed={isSelected}
+      className={`quiz-option flex min-h-16 w-full items-center justify-between gap-4 rounded-xl border px-4 py-3 text-left text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-strong ${isSubmitted ? '' : 'cursor-pointer'} ${containerStyles}`}
       aria-label={`Option ${optionLetter}: ${optionText}`}
     >
       <div className="flex items-center gap-3.5 sm:gap-4 flex-1 min-w-0">
